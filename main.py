@@ -32,7 +32,7 @@ def main() :
     print "-"*40
     for event in events :
         event.printMySelf()
-    eventDetector.drawEvents()
+    #eventDetector.drawEvents()
 
     print "-"*40
     elapsed_time=(time.time()-staringTime)

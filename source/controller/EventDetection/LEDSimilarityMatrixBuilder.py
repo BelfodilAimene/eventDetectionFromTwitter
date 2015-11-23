@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import dok_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-from TFIDFUtilities import TFIDFUtilities
+from TFIDFUtilities import getTweetsTFIDFVectorAndNorm
 
 class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
     def __init__(self,timeThreshold,distanceThreshold) :
@@ -18,7 +18,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         """
         numberOfTweets=len(tweets)
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
-        TFIDFVectors,TFIDFVectorsNorms=TFIDFUtilities.getTweetsTFIDFVectorAndNorm(tweets)
+        TFIDFVectors,TFIDFVectorsNorms=getTweetsTFIDFVectorAndNorm(tweets)
         for i in range(numberOfTweets) :
             tweetI=tweets[i]
             TFIDFVectorI=TFIDFVectors[i]
