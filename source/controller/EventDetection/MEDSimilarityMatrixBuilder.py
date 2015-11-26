@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import dok_matrix
+from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
 from TFIDFUtilities import getTweetsTFIDFVectorAndNorm,getTermOccurencesVector
 from ...model.Position import Position
@@ -148,7 +148,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         minDistance=self.distanceResolution
         scalesMaxDistances=getScalesMaxDistances(minDistance,maxDistance,self.scaleNumber)
 
-        temporalSeriesSize=int(2**math.ceil(math.log(int((maxTime-minTime).total_seconds()/self.timeResolution),2)))
+        temporalSeriesSize=int(2**math.ceil(math.log(int((maxTime-minTime).total_seconds()/self.timeResolution)+1,2)))
         
         return listOfCellPerTweet,dictOfTweetIndexPerCell,scalesMaxDistances,minTime,temporalSeriesSize
 
@@ -184,8 +184,8 @@ def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber
     haarTransform=[0]*temporalSeriesSize
     timeSeriesList=[0]*temporalSeriesSize
     size=temporalSeriesSize
-    for i in timeSerieOfTermAndCell :
-        timeSeriesList[i]=timeSerieOfTermAndCell[i]
+    for key in timeSerieOfTermAndCell :
+        timeSeriesList[key]=timeSerieOfTermAndCell[key]
     while (size>1) :
         size=size/2
         for i in range(size) :

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import dok_matrix
+from scipy.sparse import dok_matrix,coo_matrix
 
 class LouvainClusterer :
     def __init__(self,tweets,similarityMatrixBuilder) :
