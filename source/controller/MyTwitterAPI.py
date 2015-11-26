@@ -56,31 +56,6 @@ class MyTwitterAPI :
         return Tweet(_id,userId,text,hashtags,time,position)
 
     @staticmethod
-    def getTweetFromJSON(jsonText) :
-        jsonData = json.loads(jsonText)
-        _id=jsonData["id"]
-        userId=jsonData['user']['id']
-        text=jsonData["text"]
-        #---- Hashtags ----------------------------------
-        hashtags=[element["text"] for element in jsonData["entities"]["hashtags"]]
-        #------------------------------------------------
-        s=jsonData["created_at"]
-        time=parse(s)
-        print time
-        #-----Position ----------------------------------
-        position=None
-        if jsonData["coordinates"] :
-            latitude=jsonData["coordinates"]["coordinates"][1]
-            longitude=jsonData["coordinates"]["coordinates"][0]
-            position=Position(latitude,longitude)
-        return Tweet(_id,userId,text,hashtags,time,position)
-
-    @staticmethod
-    def getTweetFromJSONFile(jsonFilePath) :
-        with open(jsonFilePath) as f :
-            return MyTwitterAPI.getTweetFromJSON(f.readline())
-
-    @staticmethod
     def exportStatusToJSON(status,parentDirectory=DEFAULT_PARENT_DIRECTORY) :
         newDirectory=parentDirectory+"/"+str(status.id)+"/"
         if not os.path.exists(newDirectory):
@@ -95,11 +70,12 @@ class MyTwitterAPI :
             for entity in status.entities["media"] :
                 if ("media_url_https" in entity) : mediapath=entity["media_url_https"]
                 elif ("media_url" in entity) : mediapath=entity["media_url"]
-                if (mediapath) : MyTwitterAPI.downloadImage(mediapath,newDirectory)
+                if (mediapath) : downloadImage(mediapath,newDirectory)
 
-    @staticmethod
-    def downloadImage(urlImage,parentDirectory) :
-        head, tail = ntpath.split(urlImage)
-        urllib.urlretrieve(urlImage, parentDirectory+tail)
+
+
+def downloadImage(urlImage,parentDirectory) :
+    head, tail = ntpath.split(urlImage)
+    urllib.urlretrieve(urlImage, parentDirectory+tail)
 
     

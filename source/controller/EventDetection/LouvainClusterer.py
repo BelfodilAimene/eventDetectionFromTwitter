@@ -30,7 +30,7 @@ class LouvainClusterer :
             else :
                 nextMatrix=LouvainClusterer.buildNewSimilarityMatrix(matrix,clusters,clustersNumber)
                 matrix=nextMatrix
-        return clustersNumber,np.array(realClusters)
+        return np.array(realClusters)
 
     @staticmethod
     def updateRealClusters(realClusters,clusters) :

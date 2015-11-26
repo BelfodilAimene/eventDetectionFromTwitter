@@ -3,40 +3,60 @@ from source.controller.EventDetection.LEDSimilarityMatrixBuilder import LEDSimil
 from source.controller.EventDetection.MEDSimilarityMatrixBuilder import MEDSimilarityMatrixBuilder
 from source.controller.MongoDBHandler import MongoDBHandler
 from source.controller.EventDetection.EventDetector import EventDetector
-
 from source.model.Event import Event 
-
 import time
 
-def main() :
-    
-    staringTime=time.time()
+LED_SIM=0
+MED_SIM=1
 
-    
+def getTweetsFromTwitterAndSave(count=100,export=False) :
     mongoDBHandler=MongoDBHandler()
-    tweets=mongoDBHandler.getAllTweets()[0:50]
-    """
     api = MyTwitterAPI("twitter_config_file.txt")
-    tweets = api.getTweets(count=1,export=True)
+    tweets = api.getTweets(count=count,export=export)
     mongoDBHandler.saveTweets(tweets)
-    """
-    
-    #s=LEDSimilarityMatrixBuilder(timeThreshold=1800,distanceThreshold=100)
-    s=MEDSimilarityMatrixBuilder(timeResolution=60,distanceResolution=100,scaleNumber=4)
-    
+
+def getTweetsFromJSONRepositoryAndSave(repositoryPath="E:\\tweets") :
+    mongoDBHandler=MongoDBHandler()
+    mongoDBHandler.saveTweetsFromJSONRepository(repositoryPath)
+
+def detectEvents(limit=200,similarityType=MED_SIM,printEvents=True,drawEvents=False) :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+
+    if similarityType==LED_SIM :
+        s=LEDSimilarityMatrixBuilder(timeThreshold=1800,distanceThreshold=100)
+    else :
+        s=MEDSimilarityMatrixBuilder(timeResolution=1800,distanceResolution=100,scaleNumber=4)
+
     eventDetector=EventDetector(tweets,s)
     events=eventDetector.getEvents()
-    print "\n\n\n"
-    print "-"*40
+    
+    print "\n"+"-"*40
     print "{0} Event detected : ".format(len(events))
     print "-"*40
-    for event in events :
-        event.printMySelf()
-    #eventDetector.drawEvents()
 
-    print "-"*40
+    if printEvents :
+        for e in events :
+            print e
+            print "_"*40
+
+    if drawEvents :
+        print "drawing ..."
+        eventDetector.drawEvents()
+
+    return events
+    
+
+def main() :
+    staringTime=time.time()
+
+    events=detectEvents(limit=200)
+
     elapsed_time=(time.time()-staringTime)
+    print "-"*40
     print "Elapsed time : {0}s, {1} event detected".format(elapsed_time,len(events))
+    print "-"*40
+    
     
 
     

@@ -1,5 +1,6 @@
 import numpy as np
-from LouvainClusterer import LouvainClusterer
+from JavaBasedLouvainClusterer import LouvainClusterer
+#from LouvainClusterer import LouvainClusterer
 from ...model.Event import Event
 
 from mpl_toolkits.basemap import Basemap
@@ -13,11 +14,13 @@ class EventDetector :
         self.tweetsNumberThreshold=tweetsNumberThreshold
 
     def getEvents(self) :
+        print "Detecting events ..."
         louvainClusterer=LouvainClusterer(self.tweets,self.similarityMatrixBuilder)
-        clustersNumber,realClusters=louvainClusterer.getClusters()
-        
+        realClusters=louvainClusterer.getClusters()
+        clustersUniqueId=set(realClusters)
         events=[]
-        for clusterId in range(clustersNumber) :
+        print "   Constructing events from clusters ..."
+        for clusterId in clustersUniqueId :
             tweetsOfClusterId=self.tweets[realClusters==clusterId]
             event=Event(tweetsOfClusterId)
             if (self.isEventImportant(event)) :

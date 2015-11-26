@@ -1,22 +1,42 @@
 from ..model.Tweet import Tweet
 from ..model.Position import Position
 from pymongo import MongoClient
-import json
+from TransformationUtilities import getTweetFromJSONFile
+import os
 
 class MongoDBHandler :
     def __init__(self,port=27017,database_name='Twitter') :
         self.client = MongoClient('localhost', port)
         self.db = self.client[database_name]
 
+    def saveTweet(self,tweet) :
+        collection = self.db['tweets']
+        collection.insert(MongoDBHandler.getDocumentFromTweet(tweet))
+        
     def saveTweets(self,tweets) :
         collection = self.db['tweets']
         collection.insert([MongoDBHandler.getDocumentFromTweet(tweet) for tweet in tweets])
 
-    def getAllTweets(self) :
+    def getAllTweets(self,limit=50) :
         collection = self.db['tweets']
-        tweets=[MongoDBHandler.getTweetFromDocument(document) for document in collection.find()]
+        documents=collection.find()[0:limit]
+        tweets=[MongoDBHandler.getTweetFromDocument(document) for document in documents]
         return tweets
 
+    def saveTweetsFromJSONRepository(self,jsonDirectoryPath,ensureHavePosition=True) :
+        jsonFilePaths=os.listdir(jsonDirectoryPath)
+        i=1
+        for jsonFilePath in jsonFilePaths :
+            if (i%100==0) : print i
+            i+=1
+            path=os.path.join(jsonDirectoryPath,jsonFilePath)
+            try :
+                tweet=getTweetFromJSONFile(path)
+                if (not ensureHavePosition or tweet.position) : self.saveTweet(tweet)
+            except ValueError :
+                print jsonFilePath
+            
+        
     @staticmethod
     def getDocumentFromTweet(tweet) :
         dictionary={}

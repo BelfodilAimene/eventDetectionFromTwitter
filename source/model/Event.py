@@ -41,20 +41,14 @@ class Event :
         importantHashtags=dictHashtags
         return importantHashtags
         
-    def printMySelf(self) :
-        print self
-        for i in range(len(self.tweets)) :
-            print "  ",i,":",self.tweets[i].text
-        print "-"*40
-
     def __str__(self) :
-        S="Event in the circle of center {0} and radius {1}m. From {2} to {3}. Number of users : {4}, number of tweets {5}. They say : {6}".format(self.eventCenter,
+        S="Event in the circle of center {0} and radius {1}m. From {2} to {3} : \n\t - Number of users : {4}\n\t - Number of tweets {5} \n\t - They say : {6}".format(self.eventCenter,
                                                                                                                                   self.eventRadius,
                                                                                                                                   self.eventStartingTime,
                                                                                                                                   self.eventEndingTime,
                                                                                                                                   self.userNumber,
                                                                                                                                   len(self.tweets),
-                                                                                                                                  self.importantHashtags)
+                                                                                                                                  "< Not implemented yet ! >")
         return S
                                                                                                                                   
                                                                                                                                   
