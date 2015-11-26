@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import dok_matrix,coo_matrix
+from scipy.sparse import dok_matrix,coo_matrix,csr_matrix
 
 class LouvainClusterer :
     def __init__(self,tweets,similarityMatrixBuilder) :
@@ -9,7 +9,7 @@ class LouvainClusterer :
     def getClusters(self) :
         PASS=1
         
-        matrix=self.similarityMatrixBuilder.build(self.tweets)
+        matrix=csr_matrix(self.similarityMatrixBuilder.build(self.tweets))
         continu=True
         realClusters=[]
         clusters=[]
@@ -43,7 +43,7 @@ class LouvainClusterer :
         for i in range(0,clustersNumber) :
             for j in range(i,clustersNumber) :
                 nextMatrix[i,j]=LouvainClusterer.getSimilarityOf2Clusters(matrix,clusters,i,j)
-        return nextMatrix
+        return csr_matrix(nextMatrix)
 
     @staticmethod
     def getSimilarityOf2Clusters(matrix,clusters,clusterI,clusterJ) :
@@ -64,9 +64,8 @@ class LouvainClusterer :
         ITER=1
         
         matrixSize=matrix.shape[0]
-        sumsOfWeights=np.array([sum(matrix.getrow(i).values())+sum(matrix.getcol(i).values())-matrix[i,i] for i in range(matrixSize)])
+        sumsOfWeights=np.array([sum(matrix.getrow(i).data)+sum(matrix.getcol(i).data) for i in range(matrixSize)])
         totalSumOfWeight=sum(sumsOfWeights)
-        
         clusters=np.array(range(0,matrixSize))
         modified=True
         while modified :
@@ -103,13 +102,13 @@ class LouvainClusterer :
         
         maxDelta=0
         maxJ=-1
-        
-        for _,j in matrix.getrow(i).keys() :
+
+        for j in matrix.getrow(i).indices :
             delta=DMCE[clusters[j]]-DMCEI
             if (delta>maxDelta) :
                 maxDelta,maxJ=delta,j
 
-        for j,_ in matrix.getcol(i).keys() :
+        for j in matrix.getcol(i).indices :
             delta=DMCE[clusters[j]]-DMCEI
             if (delta>maxDelta) :
                 maxDelta,maxJ=delta,j

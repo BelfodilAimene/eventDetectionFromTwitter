@@ -106,7 +106,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                     #  Calculate the similarity
                     #---------------------------------------------------------------------------
                     M[i,j]=SST*STFIDF 
-        return M
+        return coo_matrix(M)
 
     #--------------------------- Grid view of map -----------------------------------
     def getTweetsGridIndexes(self,tweets) :

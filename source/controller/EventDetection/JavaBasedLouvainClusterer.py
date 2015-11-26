@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import dok_matrix,coo_matrix
+from scipy.sparse import dok_matrix
 import subprocess
 import sys
 
@@ -10,7 +10,7 @@ class LouvainClusterer :
 
     def getClusters(self) :
         print "   Building similarity matrix ..."
-        similarityMatrix = coo_matrix(self.similarityMatrixBuilder.build(self.tweets))
+        similarityMatrix = self.similarityMatrixBuilder.build(self.tweets)
         matrixSize=similarityMatrix.shape[0]
         
         realClusters=[]

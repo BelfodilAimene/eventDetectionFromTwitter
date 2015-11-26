@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import dok_matrix
+from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
 from TFIDFUtilities import getTweetsTFIDFVectorAndNorm
 
@@ -34,7 +34,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                             similarity+=TFIDFVectorI[term]*TFIDFVectorJ[term]
                     normProduct=TFIDFVectornormI*TFIDFVectornormJ
                     M[i,j]=similarity/normProduct if (normProduct>0) else 0
-        return M
+        return coo_matrix(M)
         
 
             
