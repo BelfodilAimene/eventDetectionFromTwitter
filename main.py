@@ -19,7 +19,7 @@ def getTweetsFromJSONRepositoryAndSave(repositoryPath="E:\\tweets") :
     mongoDBHandler=MongoDBHandler()
     mongoDBHandler.saveTweetsFromJSONRepository(repositoryPath)
 
-def detectEvents(limit=200,similarityType=MED_SIM,printEvents=True,drawEvents=False) :
+def detectEvents(limit=200,similarityType=MED_SIM,printEvents=False,drawEvents=False) :
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
 
@@ -50,7 +50,7 @@ def detectEvents(limit=200,similarityType=MED_SIM,printEvents=True,drawEvents=Fa
 def main() :
     staringTime=time.time()
 
-    events=detectEvents(limit=200)
+    events=detectEvents(limit=50000,similarityType=LED_SIM)
 
     elapsed_time=(time.time()-staringTime)
     print "-"*40

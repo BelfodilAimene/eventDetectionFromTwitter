@@ -28,7 +28,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
 
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
 
-        TFIDFVectors,TFIDFVectorsNorms=getTweetsTFIDFVectorAndNorm(tweets)
+        TFIDFVectors,TFIDFVectorsNorms,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets)
 
         TermOccurencesVector=[]
         for t in tweets : TermOccurencesVector.append(getTermOccurencesVector(t.text))
@@ -47,6 +47,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
             cellI=listOfCellPerTweet[i]
             TFIDFVectorI=TFIDFVectors[i]
             TFIDFVectornormI=TFIDFVectorsNorms[i]
+            print i
             for j in range(i+1,numberOfTweets) :
                 tweetJ=tweets[j]
                 cellJ=listOfCellPerTweet[j]

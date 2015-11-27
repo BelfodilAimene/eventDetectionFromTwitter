@@ -46,12 +46,18 @@ def getTweetsTFIDFVectorAndNorm(tweets) :
     numberOfTweets=len(tweets)
     TFVectors=[]
     IDFVector={}
-    for tweet in tweets :
+    TweetPerTermMap={}
+    for i in range(numberOfTweets) :
+        tweet=tweets[i]
         TFVector=getTFVector(tweet.text)
         TFVectors.append(TFVector)
         for term in TFVector :
             try: IDFVector[term] += 1
             except KeyError: IDFVector[term] = 1
+
+            try: TweetPerTermMap[term].add(i)
+            except KeyError: TweetPerTermMap[term] = set([i])
+            
             
     for term in IDFVector :
         IDFVector[term]=log(float(numberOfTweets)/IDFVector[term],10)
@@ -69,5 +75,5 @@ def getTweetsTFIDFVectorAndNorm(tweets) :
         TFIDFVectorsNorms.append(TFIDFVectorNorm)
         TFIDFVectors.append(TFIDFVector)
             
-    return TFIDFVectors,TFIDFVectorsNorms
+    return TFIDFVectors,TFIDFVectorsNorms,TweetPerTermMap
             
