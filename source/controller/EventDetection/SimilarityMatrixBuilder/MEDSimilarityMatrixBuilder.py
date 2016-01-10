@@ -78,7 +78,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                     SST=None
 
                     spatialScale=self.scaleNumber
-                    distanceBetweetTweets=tweetI.distance(tweetJ)
+                    distanceBetweetTweets=tweetI.position.approxDistance(tweetJ.position)
                     while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[self.scaleNumber-spatialScale]) :
                         spatialScale-=1
                     temporalScale=self.scaleNumber+1-spatialScale
@@ -151,7 +151,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
             
         leftUpperCorner=Position(minLat+deltaDlat/2,minLon+deltaDlon/2)
         rightLowerCorner=Position(int(maxLat/deltaDlat)*deltaDlat+deltaDlat/2,int(maxLon/deltaDlon)*deltaDlon+deltaDlon/2)
-        maxDistance=leftUpperCorner.distance(rightLowerCorner)
+        maxDistance=leftUpperCorner.approxDistance(rightLowerCorner)
         minDistance=self.distanceResolution
         scalesMaxDistances=getScalesMaxDistances(minDistance,maxDistance,self.scaleNumber)
 
