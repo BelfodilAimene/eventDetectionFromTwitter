@@ -29,10 +29,34 @@ class EventDetector :
         self.events=events
         return events
 
+    #Post-processing the events
     def isEventImportant(self,event) :
-        return (event.userNumber >= self.userNumberThreshold and len(event.tweets) >= self.tweetsNumberThreshold)
+        cnd1=event.userNumber >= self.userNumberThreshold and len(event.tweets) >= self.tweetsNumberThreshold
+        if (not cnd1) : return False
+
+        MAX_TOLERATED=0.5
+        tweetPerUserNumber={}
+        for tweet in self.tweets :
+            try : tweetPerUserNumber[tweet.userId]+=1
+            except KeyError : tweetPerUserNumber[tweet.userId]=1
+        maximumProportionInThisEvent=float(tweetPerUserNumber[max(list(tweetPerUserNumber), key=lambda userId : tweetPerUserNumber[userId])])/len(self.tweets)
+        cnd2=(maximumProportionInThisEvent<MAX_TOLERATED)
+        return cnd2
         
     #---------------- Visualize -----------------------------------------------------------------------#
+    def showTopKEvents(self,topk=10) :
+        if not self.events :
+            "No events detected !"
+            return
+        SIZE_OF_LINE=40
+        topKEvents=sorted(self.events,key=lambda event : len(event.tweets),reverse=True)[0:min(max(1,topk),len(self.events))]
+        #print "-"*SIZE_OF_LINE
+        print self.events[0].getHeader()
+        #print "-"*SIZE_OF_LINE 
+        for event in topKEvents :
+            print event
+            #print "-"*SIZE_OF_LINE
+
     def drawEvents(self) :
         events=self.events
         m = Basemap(width=1200000,height=1200000,projection='lcc',resolution='c',lat_0=46,lon_0=3.)
