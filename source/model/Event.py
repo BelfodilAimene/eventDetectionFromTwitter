@@ -48,7 +48,7 @@ class Event :
                                                                                                                                   self.eventEndingTime,
                                                                                                                                   self.userNumber,
                                                                                                                                   len(self.tweets),
-                                                                                                                                  "< Not implemented yet ! >")
+                                                                                                                                  importantHashtags)
         return S
                                                                                                                                   
                                                                                                                                   

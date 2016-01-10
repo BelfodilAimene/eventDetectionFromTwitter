@@ -32,8 +32,10 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         spatialIndex.fit(np.array([(tweet.position.latitude,tweet.position.longitude) for tweet in tweets]))
 
         ELEMENT_NUMBER_MATRIX=0
+        SHOW_RATE=100
+
         for i in range(numberOfTweets) :
-            if (i%100==0) : print i,":",ELEMENT_NUMBER_MATRIX
+            if (i%SHOW_RATE==0) : print i,":",ELEMENT_NUMBER_MATRIX
             
             tweetI,TFIDFVectorI,TFIDFVectornormI=tweets[i],TFIDFVectors[i],TFIDFVectorsNorms[i]
             neighboors=set()
@@ -47,10 +49,14 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
             neighboors&=set(spatialIndex.radius_neighbors(position)[1][0])
 
             #Recuperation des voisings en temps apres ce tweet (j>i <==> time(j)>time(i) puirsque les tweets sont ordonnees)
-            neighboors=[j for j in neighboors if j>i and tweets[j].delay(tweets[i])<=self.timeThreshold]
+            neighboors=[j for j in neighboors if j>i and tweets[j].delay(tweetI)<=self.timeThreshold]
             
             for j in neighboors :
                 tweetJ=tweets[j]
+
+                #Ignorer les tweets qui ne sont pas apres le tweetI dans son voisinage temporelle
+                if (j<=i or tweetJ.delay(tweetI)>self.timeThreshold) : continue
+                
                 TFIDFVectorJ,TFIDFVectornormJ=TFIDFVectors[j],TFIDFVectorsNorms[j]
                 TFIDFVectorJKeySet=set(TFIDFVectorJ)
                 keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
