@@ -44,18 +44,47 @@ class EventDetector :
         return cnd2
         
     #---------------- Visualize -----------------------------------------------------------------------#
+    def getStringOfEvent(self,event) :
+        NUM_DIGIT=10**2
+        SEPARATOR="\t|"
+
+        PERCENTAGE=0.8
+        firstIndiceOfInterval=0
+        lastIndiceOfInterval=int(PERCENTAGE*len(event.tweets))
+        estimatedEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
+        firstIndiceOfInterval+=1
+        lastIndiceOfInterval+=1
+        while (lastIndiceOfInterval<len(event.tweets)) :
+            newEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
+            if (newEventDuration<estimatedEventDuration) : estimatedEventDuration=newEventDuration
+            firstIndiceOfInterval+=1
+            lastIndiceOfInterval+=1
+            
+        S="|"+SEPARATOR.join([str(event.eventMedianTime),
+                              str(int(estimatedEventDuration)),
+                              str(float(int(NUM_DIGIT*event.eventCenter.latitude))/NUM_DIGIT),
+                              str(float(int(NUM_DIGIT*event.eventCenter.longitude))/NUM_DIGIT),
+                              str(float(int(NUM_DIGIT*event.eventRadius))/NUM_DIGIT),
+                              str(event.userNumber),
+                              str(len(event.tweets)),
+                              ",".join(event.importantHashtags)])+SEPARATOR
+        return S 
     def showTopKEvents(self,topk=10) :
         if not self.events :
             "No events detected !"
             return
         SIZE_OF_LINE=40
+        SEPARATOR="\t|"
+        HEADER="|"+SEPARATOR.join(["Median time","estimated duration (s)","mean latitude","mean longitude","radius (m)","user number","tweets number","top hashtags"])+SEPARATOR
+
         topKEvents=sorted(self.events,key=lambda event : len(event.tweets),reverse=True)[0:min(max(1,topk),len(self.events))]
-        #print "-"*SIZE_OF_LINE
-        print self.events[0].getHeader()
-        #print "-"*SIZE_OF_LINE 
+
+        print "-"*SIZE_OF_LINE
+        print HEADER
+        print "-"*SIZE_OF_LINE 
         for event in topKEvents :
-            print event
-            #print "-"*SIZE_OF_LINE
+            print self.getStringOfEvent(event)
+            print "-"*SIZE_OF_LINE
 
     def drawEvents(self) :
         events=self.events

@@ -2,13 +2,12 @@ from Position import Position
 
 class Event :
     def __init__(self,tweets) :
-        self.tweets=tweets
+        self.tweets=sorted(tweets,key=lambda tweet : tweet.time)
         
-        sortedTweets=sorted(tweets,key=lambda tweet : tweet.time)
-        self.eventStartingTime=sortedTweets[0].time
-        self.eventEndingTime=sortedTweets[0].time
-        self.eventMedianTime=sortedTweets[len(tweets)/2].time
-        self.estimatedEventDuration=sortedTweets[len(tweets)/10].delay(sortedTweets[(9*len(tweets))/10])
+        self.eventStartingTime=self.tweets[0].time
+        self.eventEndingTime=self.tweets[0].time
+        self.eventMedianTime=self.tweets[len(tweets)/2].time
+        self.estimatedEventDuration=self.tweets[len(tweets)/10].delay(self.tweets[(9*len(tweets))/10])
 
         userIdSet=set()
         self.eventCenter=Position(0,0)
@@ -42,11 +41,6 @@ class Event :
         return importantHashtags
 
     #---------------- Visualize -----------------------------------------------------------------------#
-    def getHeader(self) :
-        SEPARATOR="\t|"
-        S="|"+SEPARATOR.join(["Median time","estimated duration (s)","mean latitude","mean longitude","radius (m)","user number","tweets number","top hashtags"])+SEPARATOR
-        return S
-    
     def __str__(self) :
         NUM_DIGIT=10**2
         SEPARATOR="\t|"

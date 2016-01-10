@@ -52,6 +52,7 @@ def main() :
     events=detectEvents(limit=300,similarityType=MED_SIM,printEvents=True)
 
     elapsed_time=(time.time()-staringTime)
+
     print "-"*40
     print "Elapsed time : {0}s, {1} event detected".format(elapsed_time,len(events))
     print "-"*40
