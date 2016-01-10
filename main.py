@@ -1,7 +1,8 @@
-from source.controller.MyTwitterAPI import MyTwitterAPI
-from source.controller.EventDetection.LEDSimilarityMatrixBuilder import LEDSimilarityMatrixBuilder
-from source.controller.EventDetection.MEDSimilarityMatrixBuilder import MEDSimilarityMatrixBuilder
-from source.controller.MongoDBHandler import MongoDBHandler
+from source.controller.DataManagement.MyTwitterAPI import MyTwitterAPI
+from source.controller.DataManagement.MongoDBHandler import MongoDBHandler
+
+from source.controller.EventDetection.SimilarityMatrixBuilder.LEDSimilarityMatrixBuilder import LEDSimilarityMatrixBuilder
+from source.controller.EventDetection.SimilarityMatrixBuilder.MEDSimilarityMatrixBuilder import MEDSimilarityMatrixBuilder
 from source.controller.EventDetection.EventDetector import EventDetector
 from source.model.Event import Event 
 import time

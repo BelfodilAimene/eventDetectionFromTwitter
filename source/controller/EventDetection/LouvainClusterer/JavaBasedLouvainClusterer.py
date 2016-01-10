@@ -2,13 +2,18 @@ import numpy as np
 from scipy.sparse import dok_matrix
 import subprocess
 import sys
+from LouvainClusterer import LouvainClusterer
 
-class LouvainClusterer :
+class JavaBasedLouvainClusterer(LouvainClusterer) :
     def __init__(self,tweets,similarityMatrixBuilder) :
         self.tweets=tweets
         self.similarityMatrixBuilder=similarityMatrixBuilder
 
     def getClusters(self) :
+        """
+        This method use ModularityOptimizer.jar
+        """
+        
         print "   Building similarity matrix ..."
         similarityMatrix = self.similarityMatrixBuilder.build(self.tweets)
         matrixSize=similarityMatrix.shape[0]

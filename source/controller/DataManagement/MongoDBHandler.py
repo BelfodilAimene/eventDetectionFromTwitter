@@ -1,8 +1,9 @@
-from ..model.Tweet import Tweet
-from ..model.Position import Position
-from pymongo import MongoClient
-from TransformationUtilities import getTweetFromJSONFile
 import os
+from pymongo import MongoClient
+
+from ...model.Tweet import Tweet
+from ...model.Position import Position
+from TransformationUtilities import getTweetFromJSONFile
 
 class MongoDBHandler :
     def __init__(self,port=27017,database_name='Twitter') :

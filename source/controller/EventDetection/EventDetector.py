@@ -1,6 +1,7 @@
 import numpy as np
-from JavaBasedLouvainClusterer import LouvainClusterer
-#from LouvainClusterer import LouvainClusterer
+
+#from LouvainClusterer.OurLouvainClusterer import OurLouvainClusterer
+from LouvainClusterer.JavaBasedLouvainClusterer import JavaBasedLouvainClusterer as LouvainClusterer
 from ...model.Event import Event
 
 from mpl_toolkits.basemap import Basemap

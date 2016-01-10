@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from sklearn.neighbors import NearestNeighbors
+
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-from TFIDFUtilities import getTweetsTFIDFVectorAndNorm
+from ..Utils.TFIDFUtilities import getTweetsTFIDFVectorAndNorm
 
 DEG_LATITUDE_IN_METER = 111320 #1 degree in latitude is equal to 111320 m
 

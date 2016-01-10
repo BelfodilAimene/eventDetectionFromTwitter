@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.sparse import dok_matrix,coo_matrix,csr_matrix
+from LouvainClusterer import LouvainClusterer
 
-class LouvainClusterer :
+class OurLouvainClusterer(LouvainClusterer) :
     def __init__(self,tweets,similarityMatrixBuilder) :
         self.tweets=tweets
         self.similarityMatrixBuilder=similarityMatrixBuilder

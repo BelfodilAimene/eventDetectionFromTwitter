@@ -35,14 +35,5 @@ class Position :
         """
         return ((self.longitude-other.longitude)**p+(self.latitude-other.latitude)**p)**(1./p)
 
-    def bearing(self,other) :
-        degrees = 180 / math.pi
-        dLon = other.longitude - self.longitude
-        y = math.sin(dLon) * math.cos(other.latitude)
-        x = math.cos(self.latitude())*math.sin(other.latitude) - math.sin(self.latitude)*math.cos(other.latitude)*math.cos(dLon)
-        brng = math.atan2(y, x)*degrees
-        if (brng<0) : brng+=360
-        return brng
-
     def __str__(self) :
         return "({0},{1})".format(self.latitude,self.longitude)

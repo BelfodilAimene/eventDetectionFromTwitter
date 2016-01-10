@@ -1,11 +1,10 @@
+import math
 import numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-from TFIDFUtilities import getTweetsTFIDFVectorAndNorm,getTermOccurencesVector
-from ...model.Position import Position
 
-import math
-
+from ..Utils.TFIDFUtilities import getTweetsTFIDFVectorAndNorm,getTermOccurencesVector
+from ....model.Position import Position
 
 DEG_LATITUDE_IN_METER = 111320 #1 degree in latitude is equal to 111320 m
 

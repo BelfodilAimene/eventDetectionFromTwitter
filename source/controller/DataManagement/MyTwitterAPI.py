@@ -1,15 +1,8 @@
-import urllib
-import ntpath
-import os
+import os,urllib,ntpath,json
 import tweepy
 
-import json
-from dateutil.parser import parse
-import warnings
-warnings.filterwarnings("ignore", category=UnicodeWarning)
-
-from ..model.Tweet import Tweet
-from ..model.Position import Position
+from ...model.Tweet import Tweet
+from ...model.Position import Position
 
 DEFAULT_PARENT_DIRECTORY="Tweets"
 

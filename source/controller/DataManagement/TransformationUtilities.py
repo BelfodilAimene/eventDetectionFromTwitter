@@ -1,15 +1,6 @@
-import ntpath
-import os
-import tweepy
-
 import json
-from dateutil.parser import parse
-import warnings
-warnings.filterwarnings("ignore", category=UnicodeWarning)
-
-from ..model.Tweet import Tweet
-from ..model.Position import Position
-
+from ...model.Tweet import Tweet
+from ...model.Position import Position
 
 #-------------------------------------------------------------
 def getTweetFromJSON(jsonText) :
