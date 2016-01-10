@@ -159,9 +159,6 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         
         return listOfCellPerTweet,dictOfTweetIndexPerCell,scalesMaxDistances,minTime,temporalSeriesSize
 
-
-
-
 def getScalesMaxDistances(minDistance,maxDistance,scaleNumber) :
     alpha=(maxDistance/minDistance)**(1./(scaleNumber-1))
     scalesMaxDistances=[]
@@ -171,11 +168,10 @@ def getScalesMaxDistances(minDistance,maxDistance,scaleNumber) :
         x*=alpha
     return scalesMaxDistances
 
-def getFinestHaarTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution,temporalSeriesSize,scaleNumber) :
-    timeSerieOfTermAndCell=getTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution)
-    finestHaarTransformOfTimeSerieOfTermAndCell=getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber)
-    return finestHaarTransformOfTimeSerieOfTermAndCell
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+#    Time serie construction
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
 def getTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution) :
     timeSerieOfTermAndCell={}
     listOfTweetIndex=dictOfTweetIndexPerCell[cell]
@@ -186,6 +182,14 @@ def getTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetI
             try: timeSerieOfTermAndCell[timeIndex]+=TermOccurencesVector_I[term]
             except KeyError: timeSerieOfTermAndCell[timeIndex]=TermOccurencesVector_I[term]           
     return timeSerieOfTermAndCell
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+#    Haar Transformation
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+def getFinestHaarTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution,temporalSeriesSize,scaleNumber) :
+    timeSerieOfTermAndCell=getTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution)
+    finestHaarTransformOfTimeSerieOfTermAndCell=getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber)
+    return finestHaarTransformOfTimeSerieOfTermAndCell
 
 def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber) :
     haarTransform=[0]*temporalSeriesSize
@@ -200,6 +204,10 @@ def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber
             haarTransform[i+size]=float((timeSeriesList[2*i]-timeSeriesList[2*i+1]))/2
         timeSeriesList=haarTransform[:]
     return haarTransform[0:min(pow(2,scaleNumber),temporalSeriesSize)]
+
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+#    DTW Correlation (for SST)
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def DWTBasedCorrelation(finestHaarTransform_1,finestHaarTransform_2,temporalScale) :
     maxSize=min(pow(2,temporalScale),len(finestHaarTransform_1))
@@ -216,4 +224,3 @@ def DWTBasedCorrelation(finestHaarTransform_1,finestHaarTransform_2,temporalScal
 
     if (std1==std2==0) : return 1
     return (maxSize*prodSum-sum1*sum2)/(std1*std2) if std1*std2!=0 else 0
-    

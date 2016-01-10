@@ -49,7 +49,7 @@ def detectEvents(limit=200,similarityType=MED_SIM,printEvents=False,drawEvents=F
 def main() :
     staringTime=time.time()
 
-    events=detectEvents(limit=50000,similarityType=MED_SIM,printEvents=True)
+    events=detectEvents(limit=300,similarityType=MED_SIM,printEvents=True)
 
     elapsed_time=(time.time()-staringTime)
 
