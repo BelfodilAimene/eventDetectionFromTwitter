@@ -48,13 +48,13 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
             position=np.array([tweetI.position.latitude,tweetI.position.longitude]).reshape(-1,2)
             neighboors&=set(spatialIndex.radius_neighbors(position)[1][0])
 
-            #Recuperation des voisings en temps apres ce tweet (j>i <==> time(j)>time(i) puirsque les tweets sont ordonnees)
-            neighboors=[j for j in neighboors if j>i and tweets[j].delay(tweetI)<=self.timeThreshold]
-            
             for j in neighboors :
                 tweetJ=tweets[j]
 
-                #Ignorer les tweets qui ne sont pas apres le tweetI dans son voisinage temporelle
+                """
+                Ignorer les tweets qui ne sont pas apresle tweetI [j>i <==> time(j)>time(i) les tweets sont ordonnees]
+                Ignorer les tweets qui ne sont pas dans le voisinage temporelle du tweetI
+                """
                 if (j<=i or tweetJ.delay(tweetI)>self.timeThreshold) : continue
                 
                 TFIDFVectorJ,TFIDFVectornormJ=TFIDFVectors[j],TFIDFVectorsNorms[j]
