@@ -58,7 +58,6 @@ def getTweetsTFIDFVectorAndNorm(tweets) :
             try: TweetPerTermMap[term].add(i)
             except KeyError: TweetPerTermMap[term] = set([i])
             
-            
     for term in IDFVector :
         IDFVector[term]=log(float(numberOfTweets)/IDFVector[term],10)
 

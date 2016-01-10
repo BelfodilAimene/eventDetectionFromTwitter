@@ -3,10 +3,11 @@ import numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
 
-from ..Utils.TFIDFUtilities import getTweetsTFIDFVectorAndNorm,getTermOccurencesVector
+from ..Utils.TFIDFUtilitiesWithNoiseDetection import getTweetsTFIDFVectorAndNorm,getTermOccurencesVector
 from ....model.Position import Position
 
 DEG_LATITUDE_IN_METER = 111320 #1 degree in latitude is equal to 111320 m
+MINIMAL_TERM_PER_TWEET=5
 
 class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
     def __init__(self,timeResolution,distanceResolution,scaleNumber) :
@@ -27,7 +28,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
 
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
 
-        TFIDFVectors,TFIDFVectorsNorms,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets)
+        TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=MINIMAL_TERM_PER_TWEET, remove_noise_with_poisson_Law=False)
 
         TermOccurencesVector=[]
         for t in tweets : TermOccurencesVector.append(getTermOccurencesVector(t.text))
@@ -39,21 +40,18 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         that store avery calculated Time series
         """
         finestHaarTimeSeries={}
+        SHOW_RATE=100
         
         for i in range(numberOfTweets) :
+            if (i%SHOW_RATE==0) : print i
             tweetI=tweets[i]
             termOccurencesI=TermOccurencesVector[i]
             cellI=listOfCellPerTweet[i]
             TFIDFVectorI=TFIDFVectors[i]
-            TFIDFVectornormI=TFIDFVectorsNorms[i]
-            print i
             for j in range(i+1,numberOfTweets) :
                 tweetJ=tweets[j]
                 cellJ=listOfCellPerTweet[j]
                 TFIDFVectorJ=TFIDFVectors[j]
-                TFIDFVectorJ=TFIDFVectors[j]
-                TFIDFVectornormJ=TFIDFVectorsNorms[j]
-
                 setOfCommonTerm=set(TFIDFVectorI.keys()) & set(TFIDFVectorJ.keys())
                 if (setOfCommonTerm) :
                     #---------------------------------------------------------------------------
@@ -63,8 +61,6 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                     STFIDF=0
                     for term in setOfCommonTerm :
                         STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
-                    normProduct=TFIDFVectornormI*TFIDFVectornormJ
-                    STFIDF=STFIDF/normProduct
 
                     #---------------------------------------------------------------------------
                     #  Calculate SpatioTemporal similarity
@@ -105,7 +101,8 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                     #---------------------------------------------------------------------------
                     #  Calculate the similarity
                     #---------------------------------------------------------------------------
-                    M[i,j]=SST*STFIDF 
+                    if (SST>0) : M[i,j]=SST*STFIDF
+                    
         return coo_matrix(M)
 
     #--------------------------- Grid view of map -----------------------------------

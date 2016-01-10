@@ -3,9 +3,10 @@ from scipy.sparse import dok_matrix,coo_matrix
 from sklearn.neighbors import NearestNeighbors
 
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-from ..Utils.TFIDFUtilities import getTweetsTFIDFVectorAndNorm
+from ..Utils.TFIDFUtilitiesWithNoiseDetection import getTweetsTFIDFVectorAndNorm
 
 DEG_LATITUDE_IN_METER = 111320 #1 degree in latitude is equal to 111320 m
+MINIMAL_TERM_PER_TWEET=5
 
 class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
     def __init__(self,timeThreshold,distanceThreshold) :
@@ -25,7 +26,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
         print "      Calculating TF-IDF vectors ..."
-        TFIDFVectors,TFIDFVectorsNorms,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets)
+        TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=MINIMAL_TERM_PER_TWEET, remove_noise_with_poisson_Law=False)
         print "      Constructing similarity matrix ..."
 
         distanceThresholdInDegree=float(self.distanceThreshold)/DEG_LATITUDE_IN_METER
@@ -38,7 +39,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         for i in range(numberOfTweets) :
             if (i%SHOW_RATE==0) : print i,":",ELEMENT_NUMBER_MATRIX
             
-            tweetI,TFIDFVectorI,TFIDFVectornormI=tweets[i],TFIDFVectors[i],TFIDFVectorsNorms[i]
+            tweetI,TFIDFVectorI=tweets[i],TFIDFVectors[i]
             neighboors=set()
             
             #Recuperation des voisins par mots (les tweets ayant au moins un term en commun)
@@ -53,12 +54,12 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                 tweetJ=tweets[j]
 
                 """
-                Ignorer les tweets qui ne sont pas apresle tweetI [j>i <==> time(j)>time(i) les tweets sont ordonnees]
+                Ignorer les tweets qui ne sont pas apres le tweetI
                 Ignorer les tweets qui ne sont pas dans le voisinage temporelle du tweetI
                 """
                 if (j<=i or tweetJ.delay(tweetI)>self.timeThreshold) : continue
                 
-                TFIDFVectorJ,TFIDFVectornormJ=TFIDFVectors[j],TFIDFVectorsNorms[j]
+                TFIDFVectorJ=TFIDFVectors[j]
                 TFIDFVectorJKeySet=set(TFIDFVectorJ)
                 keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
                 if (keysIntersection) :
@@ -66,7 +67,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                     similarity=0
                     for term in keysIntersection :
                         similarity+=TFIDFVectorI[term]*TFIDFVectorJ[term]
-                    M[i,j]=similarity/(TFIDFVectornormI*TFIDFVectornormJ)
+                    M[i,j]=similarity
         return coo_matrix(M)
         
 
