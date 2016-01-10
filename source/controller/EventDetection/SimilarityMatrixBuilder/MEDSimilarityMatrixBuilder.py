@@ -27,9 +27,9 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         numberOfTweets=len(tweets)
 
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
-
+        print "      Calculating TF-IDF vectors ..."
         TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=MINIMAL_TERM_PER_TWEET, remove_noise_with_poisson_Law=False)
-
+        print "      Constructing similarity matrix ..."
         TermOccurencesVector=[]
         for t in tweets : TermOccurencesVector.append(getTermOccurencesVector(t.text))
 
@@ -40,26 +40,36 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         that store avery calculated Time series
         """
         finestHaarTimeSeries={}
-        SHOW_RATE=100
+        SHOW_RATE=1
         
         for i in range(numberOfTweets) :
             if (i%SHOW_RATE==0) : print i
-            tweetI=tweets[i]
-            termOccurencesI=TermOccurencesVector[i]
-            cellI=listOfCellPerTweet[i]
-            TFIDFVectorI=TFIDFVectors[i]
-            for j in range(i+1,numberOfTweets) :
+            
+            tweetI,TFIDFVectorI,termOccurencesI,cellI=tweets[i],TFIDFVectors[i],TermOccurencesVector[i],listOfCellPerTweet[i]
+            TFIDFVectorIKeySet=set(TFIDFVectorI)
+            neighboors=set()
+            
+            #Recuperation des voisins par mots (les tweets ayant au moins un term en commun)
+            for term in TFIDFVectorIKeySet : neighboors|=TweetPerTermMap[term]
+            
+            for j in neighboors :
                 tweetJ=tweets[j]
-                cellJ=listOfCellPerTweet[j]
-                TFIDFVectorJ=TFIDFVectors[j]
-                setOfCommonTerm=set(TFIDFVectorI.keys()) & set(TFIDFVectorJ.keys())
-                if (setOfCommonTerm) :
+
+                
+                #Ignorer les tweets qui ne sont pas apres le tweetI
+                if (j<=i) : continue
+
+                TFIDFVectorJ,cellJ=TFIDFVectors[j],listOfCellPerTweet[j]
+                TFIDFVectorJKeySet=set(TFIDFVectorJ)
+                
+                keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
+                if (keysIntersection) :
                     #---------------------------------------------------------------------------
                     #  Calculate TF IDF similarity
                     #---------------------------------------------------------------------------
                     
                     STFIDF=0
-                    for term in setOfCommonTerm :
+                    for term in keysIntersection :
                         STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
 
                     #---------------------------------------------------------------------------
@@ -73,7 +83,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                         spatialScale-=1
                     temporalScale=self.scaleNumber+1-spatialScale
                     
-                    for term in setOfCommonTerm :
+                    for term in keysIntersection :
 
                         try:
                            finestHaarTimeSerieOfTermAndCell_I=finestHaarTimeSeries[(term,cellI)]

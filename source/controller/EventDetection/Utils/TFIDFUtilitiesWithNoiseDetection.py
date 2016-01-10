@@ -96,8 +96,6 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
         elif (remove_noise_with_poisson_Law) :
             tweetsOfTerm=list(TweetPerTermMap[term])
             numberOfTweetsPerThres=[0]*len(S_FOR_FILTERING)
-
-            
             for indiceI in range(numberOfTweetOfThisTerm) :
                 tweetI=tweets[tweetsOfTerm[indiceI]]
                 for indiceJ in range(indiceI+1,numberOfTweetOfThisTerm) :
