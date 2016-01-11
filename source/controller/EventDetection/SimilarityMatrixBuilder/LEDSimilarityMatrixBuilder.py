@@ -21,23 +21,23 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         """
         Return an upper sparse triangular matrix of similarity j>i
         """
+        timeThreshold=float(self.timeThreshold)
+        distanceThreshold=float(self.distanceThreshold)
         numberOfTweets=len(tweets)
-        #tweets=sorted(tweets,key=lambda tweet : tweet.time)
-        
+
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
         print "      Calculating TF-IDF vectors ..."
         TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=MINIMAL_TERM_PER_TWEET, remove_noise_with_poisson_Law=False)
         print "      Constructing similarity matrix ..."
 
-        distanceThresholdInDegree=float(self.distanceThreshold)/DEG_LATITUDE_IN_METER
+        distanceThresholdInDegree=distanceThreshold/DEG_LATITUDE_IN_METER
         spatialIndex=NearestNeighbors(radius=distanceThresholdInDegree, algorithm='auto')
         spatialIndex.fit(np.array([(tweet.position.latitude,tweet.position.longitude) for tweet in tweets]))
 
-        ELEMENT_NUMBER_MATRIX=0
         SHOW_RATE=100
 
         for i in range(numberOfTweets) :
-            if (i%SHOW_RATE==0) : print i,":",ELEMENT_NUMBER_MATRIX
+            if (i%SHOW_RATE==0) : print "\t",i,";"
             
             tweetI,TFIDFVectorI=tweets[i],TFIDFVectors[i]
             neighboors=set()
@@ -62,12 +62,10 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                 TFIDFVectorJ=TFIDFVectors[j]
                 TFIDFVectorJKeySet=set(TFIDFVectorJ)
                 keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
-                if (keysIntersection) :
-                    ELEMENT_NUMBER_MATRIX+=1
-                    similarity=0
-                    for term in keysIntersection :
-                        similarity+=TFIDFVectorI[term]*TFIDFVectorJ[term]
-                    M[i,j]=similarity
+                similarity=0
+                for term in keysIntersection : similarity+=TFIDFVectorI[term]*TFIDFVectorJ[term]
+                M[i,j]=similarity
+
         return coo_matrix(M)
         
 

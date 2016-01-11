@@ -1,13 +1,11 @@
+import time
+from source.model.Event import Event 
 from source.controller.DataManagement.MyTwitterAPI import MyTwitterAPI
 from source.controller.DataManagement.MongoDBHandler import MongoDBHandler
 
+from source.controller.EventDetection.SimilarityMatrixBuilder.MEDSimilarityMatrixBuilder import MEDSimilarityMatrixBuilder
 from source.controller.EventDetection.SimilarityMatrixBuilder.LEDSimilarityMatrixBuilder import LEDSimilarityMatrixBuilder
-from source.controller.EventDetection.SimilarityMatrixBuilder.MEDSimilarityMatrixBuilder2 import MEDSimilarityMatrixBuilder2 as MEDSimilarityMatrixBuilder
-#from source.controller.EventDetection.SimilarityMatrixBuilder.MEDSimilarityMatrixBuilder import MEDSimilarityMatrixBuilder
-
 from source.controller.EventDetection.EventDetector import EventDetector
-from source.model.Event import Event 
-import time
 
 LED_SIM=0
 MED_SIM=1
@@ -51,7 +49,7 @@ def detectEvents(limit=200,similarityType=MED_SIM,printEvents=False,drawEvents=F
 def main() :
     staringTime=time.time()
 
-    events=detectEvents(limit=300,similarityType=MED_SIM,printEvents=True)
+    events=detectEvents(limit=500,similarityType=MED_SIM,printEvents=True)
 
     elapsed_time=(time.time()-staringTime)
 

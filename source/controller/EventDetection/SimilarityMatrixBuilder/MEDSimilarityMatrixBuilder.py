@@ -1,13 +1,19 @@
-import math
-import numpy as np
+import math,re,numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-
-from ..Utils.TFIDFUtilitiesWithNoiseDetection import getTweetsTFIDFVectorAndNorm,getTermOccurencesVector
 from ....model.Position import Position
 
-DEG_LATITUDE_IN_METER = 111320 #1 degree in latitude is equal to 111320 m
-MINIMAL_TERM_PER_TWEET=5
+#Text processing constant
+DELIMITERS=[",",";",":","!","\?","/","\*","=","\+","-","\."," ","\(","\)","\[","\]","\{","\}","'"]
+TERM_MINIMAL_SIZE=2
+TERM_MAXIMAL_SIZE=31
+
+#One degree in latitude is equal to 111320 m
+DEG_LATITUDE_IN_METER = 111320 
+
+#Noisy term in space filtering constant
+S_FOR_FILTERING=[200,400,600,800,1000]
+THRESHOLD_FOR_FILTERING=500
 
 class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
     def __init__(self,timeResolution,distanceResolution,scaleNumber) :
@@ -20,145 +26,232 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         self.distanceResolution=distanceResolution
         self.scaleNumber=scaleNumber
         
-    def build(self,tweets) :
+    def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=True) :
         """
         Return an upper sparse triangular matrix of similarity j>i
         """
+        timeResolution=self.timeResolution
+        distanceResolution=self.distanceResolution
+        scaleNumber=self.scaleNumber
+        
         numberOfTweets=len(tweets)
-
+        floatNumberOfTweets=float(numberOfTweets)
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
-        print "      Calculating TF-IDF vectors ..."
-        TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=MINIMAL_TERM_PER_TWEET, remove_noise_with_poisson_Law=False)
-        print "      Constructing similarity matrix ..."
-        TermOccurencesVector=[]
-        for t in tweets : TermOccurencesVector.append(getTermOccurencesVector(t.text))
-
-        listOfCellPerTweet,dictOfTweetIndexPerCell,scalesMaxDistances,minTime,temporalSeriesSize=self.getTweetsGridIndexes(tweets)
-
-        """
-        timeSeries is a dictionary {(term,cell) : timeSerie}} (timeSerie is seen as a dictionary {timeInstant : occurence})
-        that store avery calculated Time series
-        """
-        finestHaarTimeSeries={}
-        SHOW_RATE=1
-        
-        for i in range(numberOfTweets) :
-            if (i%SHOW_RATE==0) : print i
-            
-            tweetI,TFIDFVectorI,termOccurencesI,cellI=tweets[i],TFIDFVectors[i],TermOccurencesVector[i],listOfCellPerTweet[i]
-            TFIDFVectorIKeySet=set(TFIDFVectorI)
-            neighboors=set()
-            
-            #Recuperation des voisins par mots (les tweets ayant au moins un term en commun)
-            for term in TFIDFVectorIKeySet : neighboors|=TweetPerTermMap[term]
-            
-            for j in neighboors :
-                tweetJ=tweets[j]
-
-                
-                #Ignorer les tweets qui ne sont pas apres le tweetI
-                if (j<=i) : continue
-
-                TFIDFVectorJ,cellJ=TFIDFVectors[j],listOfCellPerTweet[j]
-                TFIDFVectorJKeySet=set(TFIDFVectorJ)
-                
-                keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
-                if (keysIntersection) :
-                    #---------------------------------------------------------------------------
-                    #  Calculate TF IDF similarity
-                    #---------------------------------------------------------------------------
-                    
-                    STFIDF=0
-                    for term in keysIntersection :
-                        STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
-
-                    #---------------------------------------------------------------------------
-                    #  Calculate SpatioTemporal similarity
-                    #---------------------------------------------------------------------------
-                    SST=None
-
-                    spatialScale=self.scaleNumber
-                    distanceBetweetTweets=tweetI.position.approxDistance(tweetJ.position)
-                    while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[self.scaleNumber-spatialScale]) :
-                        spatialScale-=1
-                    temporalScale=self.scaleNumber+1-spatialScale
-                    
-                    for term in keysIntersection :
-
-                        try:
-                           finestHaarTimeSerieOfTermAndCell_I=finestHaarTimeSeries[(term,cellI)]
-
-                        except KeyError:
-                           finestHaarTimeSerieOfTermAndCell_I=getFinestHaarTimeSerieOfTermAndCell(term,cellI,tweets,TermOccurencesVector,
-                                                                                                  dictOfTweetIndexPerCell,minTime,self.timeResolution,
-                                                                                                  temporalSeriesSize,self.scaleNumber)
-                           finestHaarTimeSeries[(term,cellI)]=finestHaarTimeSerieOfTermAndCell_I
-
-                        try:
-                           finestHaarTimeSerieOfTermAndCell_J=finestHaarTimeSeries[(term,cellJ)]
-
-                        except KeyError:
-                           finestHaarTimeSerieOfTermAndCell_J=getFinestHaarTimeSerieOfTermAndCell(term,cellJ,tweets,TermOccurencesVector,
-                                                                                                  dictOfTweetIndexPerCell,minTime,self.timeResolution,
-                                                                                                  temporalSeriesSize,self.scaleNumber)
-                           finestHaarTimeSeries[(term,cellJ)]=finestHaarTimeSerieOfTermAndCell_J
-
-
-                        correlation=DWTBasedCorrelation(finestHaarTimeSerieOfTermAndCell_I,finestHaarTimeSerieOfTermAndCell_J,temporalScale)
-                        
-                        if (SST<correlation) : SST=correlation
-
-                    #---------------------------------------------------------------------------
-                    #  Calculate the similarity
-                    #---------------------------------------------------------------------------
-                    if (SST>0) : M[i,j]=SST*STFIDF
-                    
-        return coo_matrix(M)
-
-    #--------------------------- Grid view of map -----------------------------------
-    def getTweetsGridIndexes(self,tweets) :
-        numberOfTweets=len(tweets)
-        
-        deltaDlat=float(self.distanceResolution)/DEG_LATITUDE_IN_METER
-        deltaDlon=float(self.distanceResolution)/DEG_LATITUDE_IN_METER
-
+        deltaDlat=float(distanceResolution)/DEG_LATITUDE_IN_METER
+        deltaDlon=float(distanceResolution)/DEG_LATITUDE_IN_METER
+        print "\t\tPass 1 - Get General Information"
+        #Pass 1 - Get General Information
         minTime=maxTime=tweets[0].time
         minLat=maxLat=tweets[0].position.latitude
         minLon=maxLon=tweets[0].position.longitude
-        
-        listOfCellPerTweet=[]
-        dictOfTweetIndexPerCell={}
-
-        for t in tweets :
-            if (t.position.latitude<minLat) : minLat=t.position.latitude
-            elif (t.position.latitude>maxLat) : maxLat=t.position.latitude
-
-            if (t.position.longitude<minLon) : minLon=t.position.longitude
-            elif (t.position.longitude>maxLon) : maxLon=t.position.longitude
-
-            if (t.time<minTime) : minTime=t.time
-            if (t.time>maxTime) : maxTime=t.time
-
-        for k in range(numberOfTweets) :
-            t=tweets[k]
-            i=int((t.position.latitude-minLat)/deltaDlat)
-            j=int((t.position.longitude-minLon)/deltaDlon)
-
-            listOfCellPerTweet.append((i,j))
-
-            try: dictOfTweetIndexPerCell[(i,j)].append(k)
-            except KeyError: dictOfTweetIndexPerCell[(i,j)] = [k]
-            
-        leftUpperCorner=Position(minLat+deltaDlat/2,minLon+deltaDlon/2)
+        for tweet in tweets :
+            if (tweet.position.latitude<minLat) : minLat=tweet.position.latitude
+            elif (tweet.position.latitude>maxLat) : maxLat=tweet.position.latitude
+            if (tweet.position.longitude<minLon) : minLon=tweet.position.longitude
+            elif (tweet.position.longitude>maxLon) : maxLon=tweet.position.longitude
+            if (tweet.time<minTime) : minTime=tweet.time
+            if (tweet.time>maxTime) : maxTime=tweet.time
+        minDistance=distanceResolution
+        leftUpperCorner =Position(minLat+deltaDlat/2,minLon+deltaDlon/2)
         rightLowerCorner=Position(int(maxLat/deltaDlat)*deltaDlat+deltaDlat/2,int(maxLon/deltaDlon)*deltaDlon+deltaDlon/2)
         maxDistance=leftUpperCorner.approxDistance(rightLowerCorner)
-        minDistance=self.distanceResolution
-        scalesMaxDistances=getScalesMaxDistances(minDistance,maxDistance,self.scaleNumber)
+        scalesMaxDistances=getScalesMaxDistances(minDistance,maxDistance,scaleNumber)
+        temporalSeriesSize=int(2**math.ceil(math.log(int((maxTime-minTime).total_seconds()/timeResolution)+1,2)))
+        haarTransformeSize=min(pow(2,scaleNumber),temporalSeriesSize)
+        maximalSupportableScale=min(scaleNumber,int(math.log(haarTransformeSize,2)))
+        totalArea=(maxLat-minLat)*(maxLon-minLon)*DEG_LATITUDE_IN_METER*DEG_LATITUDE_IN_METER
 
-        temporalSeriesSize=int(2**math.ceil(math.log(int((maxTime-minTime).total_seconds()/self.timeResolution)+1,2)))
-        
-        return listOfCellPerTweet,dictOfTweetIndexPerCell,scalesMaxDistances,minTime,temporalSeriesSize
+        print "\t\tPass 2 - Construct TFVectors, IDFVector, tweetsPerTermMap, timeSerieMap and cellOfTweet"
+        #Pass 2 - Construct TFVectors, IDFVector, tweetsPerTermMap, timeSerieMap and cellOfTweet
+        TFIDFVectors=[]
+        IDFVector={}
+        tweetsPerTermMap={}
+        timeSerieMap={}
+        haarSerieMap={}
+        cellOfTweet=[]
+        tweetIndex=0
+        for tweet in tweets :
+            TFVector={}
+            text=tweet.text
+            cell=(int((tweet.position.latitude-minLat)/deltaDlat),int((tweet.position.longitude-minLon)/deltaDlon))
+            cellOfTweet.append(cell)
+            timeIndex=int((tweet.time-minTime).total_seconds()/timeResolution)
+            
+            #Prepare the text
+            text = text.lower()
+            text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
+            text = re.sub('@[^\s]+','',text)
+            text = re.sub('[\s]+', ' ', text)
+            text = text.strip('\'"')
+            regex="|".join(DELIMITERS)
+            terms=re.split(regex,text)
 
+            #Construct the Occurence vector
+            for term in terms :
+                if (TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE) :
+                    try: TFVector[term] += 1
+                    except KeyError: TFVector[term] = 1
+
+            #Finalize the TF vector while constructing the IDF vector, tweetsPerTermMap and the timeSerieMap
+            for term,occurence in TFVector.iteritems() :
+                if term in IDFVector :
+                    IDFVector[term] += 1
+                    tweetsPerTermMap[term].add(tweetIndex)
+                    if cell in timeSerieMap[term] :
+                        try : timeSerieMap[term][cell][timeIndex]+=occurence
+                        except KeyError : timeSerieMap[term][cell][timeIndex]=occurence
+                    else : timeSerieMap[term][cell]={timeIndex:occurence}     
+                else :
+                    IDFVector[term] = 1
+                    tweetsPerTermMap[term] = set([tweetIndex])
+                    timeSerieMap[term]={cell:{timeIndex:occurence}}
+                TFVector[term]/=floatNumberOfTweets
+
+            TFIDFVectors.append(TFVector)
+            tweetIndex+=1
+
+        #Pass 1 on terms - Finalize IDFVectors and transform timeSerieMap to haarSerieMap of series
+        #haarSerieMap = {term : {cell : [haarTransform,[sum for each timescale],[std for each time scale]], ...}, ...}
+        print "\t\tPass 1 on terms - Finalize IDFVectors and transform timeSerieMap to FinestHaarTransform of series"
+        TERM_INDEX=0
+        SHOW_RATE=100
+        print "\t\t\tNumber of terms :",len(IDFVector)
+        for term,numberOfTweetOfThisTerm in IDFVector.iteritems() :
+            if (TERM_INDEX%SHOW_RATE==0) : print "\t\t\t",TERM_INDEX
+            TERM_INDEX+=1
+
+            #---------------------------------------------------------------------
+            #    Delete noisy terms
+            #---------------------------------------------------------------------
+            termToDelete=False
+
+            #Eliminate term that appear less than minimalTermPerTweet
+            if (numberOfTweetOfThisTerm<minimalTermPerTweet) : termToDelete=True
+
+            #Eliminate terms that have poisson distribution in space
+            elif (remove_noise_with_poisson_Law) :
+                tweetsOfTerm=list(tweetsPerTermMap[term])
+                numberOfTweetsPerThres=[0]*len(S_FOR_FILTERING)
+                for indiceI in range(numberOfTweetOfThisTerm) :
+                    tweetI=tweets[tweetsOfTerm[indiceI]]
+                    positionI=tweetI.position
+                    for indiceJ in range(indiceI+1,numberOfTweetOfThisTerm) :
+                        tweetJ=tweets[tweetsOfTerm[indiceJ]]
+                        positionJ=tweetJ.position
+                        k=len(S_FOR_FILTERING)-1
+                        distanceIJ=positionI.approxDistance(positionJ)
+                        while (k>=0 and distanceIJ<=S_FOR_FILTERING[k]) :
+                            numberOfTweetsPerThres[k]+=1
+                            k-=1
+                LValuesPerThres=[math.sqrt(((2*totalArea*numPerThres)/numberOfTweetOfThisTerm)/math.pi)-thres for thres,numPerThres in zip(S_FOR_FILTERING,numberOfTweetsPerThres)]
+                meanLValue=sum(LValuesPerThres)/len(LValuesPerThres)
+                if (meanLValue<THRESHOLD_FOR_FILTERING) : termToDelete=True
+            
+            #Delete term 
+            if (termToDelete) :
+                tweetsOfTerm=tweetsPerTermMap[term]
+                for i in tweetsOfTerm :
+                    TFIDFVectorI=TFIDFVectors[i]
+                    del TFIDFVectorI[term]
+                del tweetsPerTermMap[term]
+                del timeSerieMap[term]
+                continue
+
+            #---------------------------------------------------------------------
+            #    End of noise deletion
+            #---------------------------------------------------------------------
+
+            IDFVector[term]=math.log(floatNumberOfTweets/IDFVector[term],10)
+            for cell, timeSerie in timeSerieMap[term].iteritems() :
+                #the sum list and std list begin from 0 to scaleNumber-1 but refer to temporalScale from 1 to scaleNumber
+                haarTransform,listOfSum,listOfStd=getFinestHaarTransform(timeSerie,temporalSeriesSize,scaleNumber),[0]*scaleNumber,[0]*scaleNumber
+                for i in range(0,2) :
+                    listOfSum[0]+=haarTransform[i]
+                    listOfStd[0]+=math.pow(haarTransform[i],2)
+                currentScale=1
+                while currentScale<maximalSupportableScale :
+                    listOfSum[currentScale]+=listOfSum[currentScale-1]
+                    listOfStd[currentScale]+=listOfStd[currentScale-1]
+                    for i in range(int(math.pow(2,currentScale)),int(math.pow(2,currentScale+1))) :
+                        listOfSum[currentScale]+=haarTransform[i]
+                        listOfStd[currentScale]+=math.pow(haarTransform[i],2)
+                    currentScale+=1
+
+                for currentScale in range(0,maximalSupportableScale) :
+                    listOfStd[currentScale]=math.sqrt(math.pow(2,currentScale+1)*listOfStd[currentScale]-math.pow(listOfSum[currentScale],2))
+                while currentScale<scaleNumber:
+                    listOfSum[currentScale]=listOfSum[maximalSupportableScale-1]
+                    listOfStd[currentScale]=listOfStd[maximalSupportableScale-1]
+                    currentScale+=1
+
+                if (cell in haarSerieMap) : haarSerieMap[cell][term]=[haarTransform,listOfSum,listOfStd]
+                else : haarSerieMap[cell]={term:[haarTransform,listOfSum,listOfStd]}
+
+        print "\t\tPass 3 - Finalize TF-IDF Vectors" 
+        #Pass 3 - Finalize TF-IDF Vectors
+        for TFIDFVector in TFIDFVectors :
+            TFIDFVectorNorm=0
+            for term in TFIDFVector :
+                TFIDFVector[term]*=IDFVector[term]
+                TFIDFVectorNorm+=math.pow(TFIDFVector[term],2)
+            TFIDFVectorNorm=math.sqrt(TFIDFVectorNorm)
+            for term in TFIDFVector : TFIDFVector[term]/=TFIDFVectorNorm
+
+        #Done with preparation : TFIDFVectors, tweetsPerTermMap, timeSerieMap
+        #Now is the time to construct the similarity matrix
+        print "\t\tConstructing Similarity Matrix ..."
+        SHOW_RATE=10
+        for i in range(numberOfTweets) :
+            tweetI,TFIDFVectorI,cellI=tweets[i],TFIDFVectors[i],cellOfTweet[i]
+            if (not TFIDFVectorI) : continue
+            if (i%SHOW_RATE==0) : print "\t\t\t",i,";",
+            TFIDFVectorIKeySet=set(TFIDFVectorI)
+            cellIHaarSerieByTerm=haarSerieMap[cellI]
+            positionI=tweetI.position
+            if (i%SHOW_RATE==0) :print "terms :",len(TFIDFVectorIKeySet),";",
+
+            neighboors=set()
+
+            #Recuperation des voisins par mots (les tweets ayant au moins un term en commun)
+            for term in TFIDFVectorIKeySet : neighboors|=tweetsPerTermMap[term]
+
+            if (i%SHOW_RATE==0) : print "neighboors :",len(neighboors),"."
+            for j in neighboors :
+                #Ignorer les tweets qui ne sont pas apres le tweetI
+                if (j<=i) : continue
+                tweetJ,TFIDFVectorJ,cellJ=tweets[j],TFIDFVectors[j],cellOfTweet[j]
+                if (not TFIDFVectorJ) : continue
+                TFIDFVectorJKeySet=set(TFIDFVectorJ)
+                cellJHaarSerieByTerm=haarSerieMap[cellJ]
+                positionJ=tweetJ.position
+
+                keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
+                #---------------------------------------------------------------------------
+                #  Calculate TF IDF similarity and SST Similarity
+                #---------------------------------------------------------------------------
+                    
+                STFIDF=0
+                SST=None
+
+                spatialScale=scaleNumber
+                distanceBetweetTweets=positionI.approxDistance(positionJ)
+                while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[scaleNumber-spatialScale]) : spatialScale-=1
+                temporalScale=scaleNumber+1-spatialScale
+                    
+                for term in keysIntersection :
+                    STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
+                    correlation=DWTBasedCorrelation(cellIHaarSerieByTerm[term],cellJHaarSerieByTerm[term],temporalScale)
+                    if (SST<correlation) : SST=correlation
+
+                #---------------------------------------------------------------------------
+                #  Calculate the similarity
+                #---------------------------------------------------------------------------
+                if (SST>0) : M[i,j]=SST*STFIDF
+                    
+        return coo_matrix(M)
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+#    Basic function to get the different scale of distance between minDistance anb maxDistance
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
 def getScalesMaxDistances(minDistance,maxDistance,scaleNumber) :
     alpha=(maxDistance/minDistance)**(1./(scaleNumber-1))
     scalesMaxDistances=[]
@@ -167,36 +260,14 @@ def getScalesMaxDistances(minDistance,maxDistance,scaleNumber) :
         scalesMaxDistances.append(x)
         x*=alpha
     return scalesMaxDistances
-
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------
-#    Time serie construction
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------
-def getTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution) :
-    timeSerieOfTermAndCell={}
-    listOfTweetIndex=dictOfTweetIndexPerCell[cell]
-    for i in listOfTweetIndex :
-        TermOccurencesVector_I=TermOccurencesVector[i]
-        if (term in TermOccurencesVector_I) :
-            timeIndex=int((tweets[i].time-minTime).total_seconds()/timeResolution)
-            try: timeSerieOfTermAndCell[timeIndex]+=TermOccurencesVector_I[term]
-            except KeyError: timeSerieOfTermAndCell[timeIndex]=TermOccurencesVector_I[term]           
-    return timeSerieOfTermAndCell
-
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    Haar Transformation
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
-def getFinestHaarTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution,temporalSeriesSize,scaleNumber) :
-    timeSerieOfTermAndCell=getTimeSerieOfTermAndCell(term,cell,tweets,TermOccurencesVector,dictOfTweetIndexPerCell,minTime,timeResolution)
-    finestHaarTransformOfTimeSerieOfTermAndCell=getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber)
-    return finestHaarTransformOfTimeSerieOfTermAndCell
-
 def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber) :
     haarTransform=[0]*temporalSeriesSize
     timeSeriesList=[0]*temporalSeriesSize
     size=temporalSeriesSize
-    for key in timeSerieOfTermAndCell :
-        timeSeriesList[key]=timeSerieOfTermAndCell[key]
+    for key in timeSerieOfTermAndCell : timeSeriesList[key]=timeSerieOfTermAndCell[key]
     while (size>1) :
         size=size/2
         for i in range(size) :
@@ -210,17 +281,13 @@ def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def DWTBasedCorrelation(finestHaarTransform_1,finestHaarTransform_2,temporalScale) :
-    maxSize=min(pow(2,temporalScale),len(finestHaarTransform_1))
-    prodSum=sum1=sum2=squaresSum1=squaresSum2=0
-
-    for i in range(maxSize) :
-        sum1+=finestHaarTransform_1[i]
-        sum2+=finestHaarTransform_2[i]
-        prodSum+=finestHaarTransform_1[i]*finestHaarTransform_2[i]
-        squaresSum1+=finestHaarTransform_1[i]**2
-        squaresSum2+=finestHaarTransform_2[i]**2
-    std1=math.sqrt(maxSize*squaresSum1-sum1**2)
-    std2=math.sqrt(maxSize*squaresSum2-sum2**2)
-
+    std1=finestHaarTransform_1[2][temporalScale-1]
+    std2=finestHaarTransform_2[2][temporalScale-1]
     if (std1==std2==0) : return 1
-    return (maxSize*prodSum-sum1*sum2)/(std1*std2) if std1*std2!=0 else 0
+    if (std1*std2==0) : return 0
+    sum1=finestHaarTransform_1[1][temporalScale-1]
+    sum2=finestHaarTransform_2[1][temporalScale-1]
+    maxSize=min(pow(2,temporalScale),len(finestHaarTransform_1[0]))
+    prodSum=0
+    for v1,v2 in zip(finestHaarTransform_1[0][0:maxSize],finestHaarTransform_2[0][0:maxSize]) : prodSum+=v1*v2
+    return (maxSize*prodSum-sum1*sum2)/(std1*std2)

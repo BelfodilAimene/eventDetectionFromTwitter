@@ -101,7 +101,7 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
                 for indiceJ in range(indiceI+1,numberOfTweetOfThisTerm) :
                     tweetJ=tweets[tweetsOfTerm[indiceJ]]
                     k=len(S_FOR_FILTERING)-1
-                    distanceIJ=tweetI.distanceP(tweetJ)
+                    distanceIJ=tweetI.position.approxDistance(tweetJ.position)
                     while (k>=0 and distanceIJ<=S_FOR_FILTERING[k]) :
                         numberOfTweetsPerThres[k]+=1
                         k-=1
