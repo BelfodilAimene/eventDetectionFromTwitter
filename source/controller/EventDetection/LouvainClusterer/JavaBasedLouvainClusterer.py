@@ -1,7 +1,5 @@
-import numpy as np
+import sys,subprocess,numpy as np
 from scipy.sparse import dok_matrix
-import subprocess
-import sys
 from LouvainClusterer import LouvainClusterer
 
 class JavaBasedLouvainClusterer(LouvainClusterer) :
