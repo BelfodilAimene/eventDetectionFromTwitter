@@ -61,6 +61,7 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
         IDFVector={}
         tweetsPerTermMap={}
         timeSerieMap={}
+        haarSerieMap={}
         cellOfTweet=[]
         tweetIndex=0
         for tweet in tweets :
@@ -135,7 +136,8 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
                     listOfStd[currentScale]=listOfStd[maximalSupportableScale-1]
                     currentScale+=1
 
-                timeSerieMap[term][cell]=[haarTransform,listOfSum,listOfStd]
+                if (cell in haarSerieMap) : haarSerieMap[cell][term]=[haarTransform,listOfSum,listOfStd]
+                else : haarSerieMap[cell]={term:[haarTransform,listOfSum,listOfStd]}
 
         print "\t\tPass 3 - Finalize TF-IDF Vectors" 
         #Pass 3 - Finalize TF-IDF Vectors
@@ -156,6 +158,8 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
             
             tweetI,TFIDFVectorI,cellI=tweets[i],TFIDFVectors[i],cellOfTweet[i]
             TFIDFVectorIKeySet=set(TFIDFVectorI)
+            cellIHaarSerieByTerm=haarSerieMap[cellI]
+            positionI=tweetI.position
 
             neighboors=set()
 
@@ -167,30 +171,26 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
                 if (j<=i) : continue
                 tweetJ,TFIDFVectorJ,cellJ=tweets[j],TFIDFVectors[j],cellOfTweet[j]
                 TFIDFVectorJKeySet=set(TFIDFVectorJ)
+                cellJHaarSerieByTerm=haarSerieMap[cellJ]
+                positionJ=tweetJ.position
 
                 keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
                 if (keysIntersection) :
                     #---------------------------------------------------------------------------
-                    #  Calculate TF IDF similarity
+                    #  Calculate TF IDF similarity and SST Similarity
                     #---------------------------------------------------------------------------
                     
                     STFIDF=0
-                    for term in keysIntersection :
-                        STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
-
-                    #---------------------------------------------------------------------------
-                    #  Calculate SpatioTemporal similarity
-                    #---------------------------------------------------------------------------
-
                     SST=None
 
                     spatialScale=scaleNumber
-                    distanceBetweetTweets=tweetI.position.approxDistance(tweetJ.position)
+                    distanceBetweetTweets=positionI.approxDistance(positionJ)
                     while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[scaleNumber-spatialScale]) : spatialScale-=1
                     temporalScale=scaleNumber+1-spatialScale
                     
                     for term in keysIntersection :
-                        correlation=DWTBasedCorrelation(timeSerieMap[term][cellI],timeSerieMap[term][cellJ],temporalScale)
+                        STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
+                        correlation=DWTBasedCorrelation(cellIHaarSerieByTerm[term],cellJHaarSerieByTerm[term],temporalScale)
                         if (SST<correlation) : SST=correlation
 
                     #---------------------------------------------------------------------------
@@ -232,13 +232,13 @@ def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def DWTBasedCorrelation(finestHaarTransform_1,finestHaarTransform_2,temporalScale) :
-    maxSize=min(pow(2,temporalScale),len(finestHaarTransform_1[0]))
-    sum1=finestHaarTransform_1[1][temporalScale-1]
-    sum2=finestHaarTransform_2[1][temporalScale-1]
     std1=finestHaarTransform_1[2][temporalScale-1]
     std2=finestHaarTransform_2[2][temporalScale-1]
     if (std1==std2==0) : return 1
     if (std1*std2==0) : return 0
+    sum1=finestHaarTransform_1[1][temporalScale-1]
+    sum2=finestHaarTransform_2[1][temporalScale-1]
+    maxSize=min(pow(2,temporalScale),len(finestHaarTransform_1[0]))
     prodSum=0
     for v1,v2 in zip(finestHaarTransform_1[0][0:maxSize],finestHaarTransform_2[0][0:maxSize]) : prodSum+=v1*v2
     return (maxSize*prodSum-sum1*sum2)/(std1*std2)
