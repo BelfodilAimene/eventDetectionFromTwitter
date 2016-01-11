@@ -14,7 +14,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         self.timeThreshold=timeThreshold
         self.distanceThreshold=distanceThreshold
         
-    def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=True) :
+    def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
         """
         Return an upper sparse triangular matrix of similarity j>i
         """

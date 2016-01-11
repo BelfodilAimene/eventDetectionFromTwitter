@@ -23,7 +23,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         self.distanceResolution=distanceResolution
         self.scaleNumber=scaleNumber
         
-    def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=True) :
+    def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
         """
         Return an upper sparse triangular matrix of similarity j>i
         """
@@ -162,6 +162,10 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
             for cell, timeSerie in timeSerieMap[term].iteritems() :
                 #the sum list and std list begin from 0 to scaleNumber-1 but refer to temporalScale from 1 to scaleNumber
                 haarTransform,listOfSum,listOfStd=getFinestHaarTransform(timeSerie,temporalSeriesSize,scaleNumber),[0]*scaleNumber,[0]*scaleNumber
+
+                #deleting the timeSerie 1
+                timeSerie.clear()
+                
                 for i in range(0,2) :
                     listOfSum[0]+=haarTransform[i]
                     listOfStd[0]+=math.pow(haarTransform[i],2)
@@ -184,6 +188,10 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                 if (cell in haarSerieMap) : haarSerieMap[cell][term]=[haarTransform,listOfSum,listOfStd]
                 else : haarSerieMap[cell]={term:[haarTransform,listOfSum,listOfStd]}
 
+            #deleting term from timeSerieMap
+            timeSerieMap[term].clear()
+            del timeSerieMap[term]
+            
         print "\t\tPass 3 - Finalize TF-IDF Vectors" 
         #Pass 3 - Finalize TF-IDF Vectors
         for TFIDFVector in TFIDFVectors :
@@ -194,7 +202,10 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
             TFIDFVectorNorm=math.sqrt(TFIDFVectorNorm)
             for term in TFIDFVector : TFIDFVector[term]/=TFIDFVectorNorm
 
-        #Done with preparation : TFIDFVectors, tweetsPerTermMap, timeSerieMap
+        #delete IDFVector
+        IDFVector.clear()
+        
+        #Done with preparation : TFIDFVectors, tweetsPerTermMap, haarSerieMap
         #Now is the time to construct the similarity matrix
         print "\t\tConstructing Similarity Matrix ..."
         SHOW_RATE=10

@@ -42,11 +42,11 @@ def detectEvents(limit=200,similarityType=MED_SIM,printEvents=False,drawEvents=F
     
     return events
     
-
+NUMBER_OF_TWEETS=56021
 def main() :
     staringTime=time.time()
 
-    events=detectEvents(limit=300,similarityType=LED_SIM,printEvents=True)
+    events=detectEvents(limit=50000,similarityType=MED_SIM,printEvents=True)
 
     elapsed_time=(time.time()-staringTime)
 
