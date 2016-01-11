@@ -25,11 +25,15 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
         """
         Return an upper sparse triangular matrix of similarity j>i
         """
+        timeResolution=self.timeResolution
+        distanceResolution=self.distanceResolution
+        scaleNumber=self.scaleNumber
+        
         numberOfTweets=len(tweets)
         floatNumberOfTweets=float(numberOfTweets)
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
-        deltaDlat=float(self.distanceResolution)/DEG_LATITUDE_IN_METER
-        deltaDlon=float(self.distanceResolution)/DEG_LATITUDE_IN_METER
+        deltaDlat=float(distanceResolution)/DEG_LATITUDE_IN_METER
+        deltaDlon=float(distanceResolution)/DEG_LATITUDE_IN_METER
 
         #Pass 1 - Get General Information
         minTime=maxTime=tweets[0].time
@@ -42,12 +46,14 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
             elif (tweet.position.longitude>maxLon) : maxLon=tweet.position.longitude
             if (tweet.time<minTime) : minTime=tweet.time
             if (tweet.time>maxTime) : maxTime=tweet.time
-        minDistance=self.distanceResolution
+        minDistance=distanceResolution
         leftUpperCorner =Position(minLat+deltaDlat/2,minLon+deltaDlon/2)
         rightLowerCorner=Position(int(maxLat/deltaDlat)*deltaDlat+deltaDlat/2,int(maxLon/deltaDlon)*deltaDlon+deltaDlon/2)
         maxDistance=leftUpperCorner.approxDistance(rightLowerCorner)
-        scalesMaxDistances=getScalesMaxDistances(minDistance,maxDistance,self.scaleNumber)
-        temporalSeriesSize=int(2**math.ceil(math.log(int((maxTime-minTime).total_seconds()/self.timeResolution)+1,2)))
+        scalesMaxDistances=getScalesMaxDistances(minDistance,maxDistance,scaleNumber)
+        temporalSeriesSize=int(2**math.ceil(math.log(int((maxTime-minTime).total_seconds()/timeResolution)+1,2)))
+        haarTransformeSize=min(pow(2,scaleNumber),temporalSeriesSize)
+        maximalSupportableScale=min(scaleNumber,int(math.log(haarTransformeSize,2)))
 
         #Pass 2 - Construct TFVectors, IDFVector, tweetsPerTermMap, timeSerieMap and cellOfTweet
         TFIDFVectors=[]
@@ -61,7 +67,7 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
             text=tweet.text
             cell=(int((tweet.position.latitude-minLat)/deltaDlat),int((tweet.position.longitude-minLon)/deltaDlon))
             cellOfTweet.append(cell)
-            timeIndex=int((tweet.time-minTime).total_seconds()/self.timeResolution)
+            timeIndex=int((tweet.time-minTime).total_seconds()/timeResolution)
             
             #Prepare the text
             text = text.lower()
@@ -97,11 +103,33 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
             tweetIndex+=1
 
         #Pass 1 on terms - Finalize IDFVectors and transform timeSerieMap to FinestHaarTransform of series
+        # timeSerieMap = {term : {cell : [haarTransform,[sum for each timescale],[std for each time scale]], ...}, ...}
         for term in IDFVector :
             IDFVector[term]=math.log(floatNumberOfTweets/IDFVector[term],10)
             for cell, timeSerie in timeSerieMap[term].iteritems() :
-                timeSerieMap[term][cell]=getFinestHaarTransform(timeSerie,temporalSeriesSize,self.scaleNumber)
+                #the sum list and std list begin from 0 to scaleNumber-1 but refer to temporalScale from 1 to scaleNumber
+                haarTransform,listOfSum,listOfStd=getFinestHaarTransform(timeSerie,temporalSeriesSize,scaleNumber),[0]*scaleNumber,[0]*scaleNumber
+                for i in range(0,2) :
+                    listOfSum[0]+=haarTransform[i]
+                    listOfStd[0]+=math.pow(haarTransform[i],2)
+                currentScale=1
+                while currentScale<maximalSupportableScale :
+                    listOfSum[currentScale]+=listOfSum[currentScale-1]
+                    listOfStd[currentScale]+=listOfStd[currentScale-1]
+                    for i in range(int(math.pow(2,currentScale)),int(math.pow(2,currentScale+1))) :
+                        listOfSum[currentScale]+=haarTransform[i]
+                        listOfStd[currentScale]+=math.pow(haarTransform[i],2)
+                    currentScale+=1
 
+                for currentScale in range(0,maximalSupportableScale) :
+                    listOfStd[currentScale]=math.sqrt(math.pow(2,currentScale+1)*listOfStd[currentScale]-math.pow(listOfSum[currentScale],2))
+                while currentScale<scaleNumber:
+                    listOfSum[currentScale]=listOfSum[maximalSupportableScale-1]
+                    listOfStd[currentScale]=listOfStd[maximalSupportableScale-1]
+                    currentScale+=1
+
+                timeSerieMap[term][cell]=[haarTransform,listOfSum,listOfStd]
+                
         #Pass 3 - Finalize TF-IDF Vectors
         for TFIDFVector in TFIDFVectors :
             TFIDFVectorNorm=0
@@ -148,10 +176,10 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
 
                     SST=None
 
-                    spatialScale=self.scaleNumber
+                    spatialScale=scaleNumber
                     distanceBetweetTweets=tweetI.position.approxDistance(tweetJ.position)
-                    while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[self.scaleNumber-spatialScale]) : spatialScale-=1
-                    temporalScale=self.scaleNumber+1-spatialScale
+                    while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[scaleNumber-spatialScale]) : spatialScale-=1
+                    temporalScale=scaleNumber+1-spatialScale
                     
                     for term in keysIntersection :
                         correlation=DWTBasedCorrelation(timeSerieMap[term][cellI],timeSerieMap[term][cellJ],temporalScale)
@@ -196,17 +224,13 @@ def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def DWTBasedCorrelation(finestHaarTransform_1,finestHaarTransform_2,temporalScale) :
-    maxSize=min(pow(2,temporalScale),len(finestHaarTransform_1))
-    prodSum=sum1=sum2=squaresSum1=squaresSum2=0
-
-    for i in range(maxSize) :
-        sum1+=finestHaarTransform_1[i]
-        sum2+=finestHaarTransform_2[i]
-        prodSum+=finestHaarTransform_1[i]*finestHaarTransform_2[i]
-        squaresSum1+=finestHaarTransform_1[i]**2
-        squaresSum2+=finestHaarTransform_2[i]**2
-    std1=math.sqrt(maxSize*squaresSum1-sum1**2)
-    std2=math.sqrt(maxSize*squaresSum2-sum2**2)
-
+    maxSize=min(pow(2,temporalScale),len(finestHaarTransform_1[0]))
+    sum1=finestHaarTransform_1[1][temporalScale-1]
+    sum2=finestHaarTransform_2[1][temporalScale-1]
+    std1=finestHaarTransform_1[2][temporalScale-1]
+    std2=finestHaarTransform_2[2][temporalScale-1]
     if (std1==std2==0) : return 1
-    return (maxSize*prodSum-sum1*sum2)/(std1*std2) if std1*std2!=0 else 0
+    if (std1*std2==0) : return 0
+    prodSum=0
+    for v1,v2 in zip(finestHaarTransform_1[0][0:maxSize],finestHaarTransform_2[0][0:maxSize]) : prodSum+=v1*v2
+    return (maxSize*prodSum-sum1*sum2)/(std1*std2)
