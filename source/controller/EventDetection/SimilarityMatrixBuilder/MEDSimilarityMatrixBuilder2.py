@@ -34,7 +34,7 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
         deltaDlat=float(distanceResolution)/DEG_LATITUDE_IN_METER
         deltaDlon=float(distanceResolution)/DEG_LATITUDE_IN_METER
-
+        print "\t\tPass 1 - Get General Information"
         #Pass 1 - Get General Information
         minTime=maxTime=tweets[0].time
         minLat=maxLat=tweets[0].position.latitude
@@ -55,6 +55,7 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
         haarTransformeSize=min(pow(2,scaleNumber),temporalSeriesSize)
         maximalSupportableScale=min(scaleNumber,int(math.log(haarTransformeSize,2)))
 
+        print "\t\tPass 2 - Construct TFVectors, IDFVector, tweetsPerTermMap, timeSerieMap and cellOfTweet"
         #Pass 2 - Construct TFVectors, IDFVector, tweetsPerTermMap, timeSerieMap and cellOfTweet
         TFIDFVectors=[]
         IDFVector={}
@@ -104,7 +105,13 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
 
         #Pass 1 on terms - Finalize IDFVectors and transform timeSerieMap to FinestHaarTransform of series
         # timeSerieMap = {term : {cell : [haarTransform,[sum for each timescale],[std for each time scale]], ...}, ...}
+        print "\t\tPass 1 on terms - Finalize IDFVectors and transform timeSerieMap to FinestHaarTransform of series"
+        TERM_INDEX=0
+        SHOW_RATE=100
+        print "\t\t\tNumber of terms :",len(IDFVector)
         for term in IDFVector :
+            if (TERM_INDEX%SHOW_RATE==0) : print "\t\t\t",TERM_INDEX
+            TERM_INDEX+=1
             IDFVector[term]=math.log(floatNumberOfTweets/IDFVector[term],10)
             for cell, timeSerie in timeSerieMap[term].iteritems() :
                 #the sum list and std list begin from 0 to scaleNumber-1 but refer to temporalScale from 1 to scaleNumber
@@ -129,7 +136,8 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
                     currentScale+=1
 
                 timeSerieMap[term][cell]=[haarTransform,listOfSum,listOfStd]
-                
+
+        print "\t\tPass 3 - Finalize TF-IDF Vectors" 
         #Pass 3 - Finalize TF-IDF Vectors
         for TFIDFVector in TFIDFVectors :
             TFIDFVectorNorm=0
@@ -141,7 +149,7 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
 
         #Done with preparation : TFIDFVectors, tweetsPerTermMap, timeSerieMap
         #Now is the time to construct the similarity matrix
-
+        print "Constructing Similarity Matrix ..."
         SHOW_RATE=1
         for i in range(numberOfTweets) :
             if (i%SHOW_RATE==0) : print i
