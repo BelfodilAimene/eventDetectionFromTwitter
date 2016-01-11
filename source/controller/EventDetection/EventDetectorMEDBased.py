@@ -348,6 +348,7 @@ class EventDetectorMEDBased :
         
         print "   Building similarity matrix ..."
 
+        
         realClusters=[]
         weightsFilePath="input.txt"
         clusterFilePath="output.txt"
@@ -357,6 +358,7 @@ class EventDetectorMEDBased :
         # execute the command
         print "   Clustering ..."
         command = "java -jar ModularityOptimizer.jar {0} {1} 1 0.5 2 10 10 0 0".format(weightsFilePath,clusterFilePath)
+        #print command
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         process.wait()
         

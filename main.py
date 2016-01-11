@@ -58,8 +58,8 @@ NUMBER_OF_TWEETS=56021
 def main() :
     staringTime=time.time()
 
-    detectEvents(limit=300,similarityType=MED_SIM,printEvents=True)
-    #detectEvents2(limit=300,minimalTermPerTweet=5,remove_noise_with_poisson_Law=False)
+    #detectEvents(limit=300,similarityType=MED_SIM,printEvents=True)
+    detectEvents2(limit=300,minimalTermPerTweet=5,remove_noise_with_poisson_Law=False)
     
     elapsed_time=(time.time()-staringTime)
 
