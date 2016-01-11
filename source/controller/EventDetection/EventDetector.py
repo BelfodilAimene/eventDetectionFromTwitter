@@ -68,7 +68,8 @@ class EventDetector :
                               str(event.userNumber),
                               str(len(event.tweets)),
                               ",".join(event.importantHashtags)])+SEPARATOR
-        return S 
+        return S
+    
     def showTopKEvents(self,topk=10) :
         if not self.events :
             "No events detected !"
