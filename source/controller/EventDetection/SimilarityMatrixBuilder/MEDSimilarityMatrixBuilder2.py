@@ -151,23 +151,23 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
 
         #Done with preparation : TFIDFVectors, tweetsPerTermMap, timeSerieMap
         #Now is the time to construct the similarity matrix
-        print "Constructing Similarity Matrix ..."
-        SHOW_RATE=1
+        print "\t\tConstructing Similarity Matrix ..."
+        SHOW_RATE=10
         for i in range(numberOfTweets) :
-            if (i%SHOW_RATE==0) : print i,";",
+            if (i%SHOW_RATE==0) : print "\t\t\t",i,";",
             
             tweetI,TFIDFVectorI,cellI=tweets[i],TFIDFVectors[i],cellOfTweet[i]
             TFIDFVectorIKeySet=set(TFIDFVectorI)
             cellIHaarSerieByTerm=haarSerieMap[cellI]
             positionI=tweetI.position
-            print "terms :",len(TFIDFVectorIKeySet),";",
+            if (i%SHOW_RATE==0) :print "terms :",len(TFIDFVectorIKeySet),";",
 
             neighboors=set()
 
             #Recuperation des voisins par mots (les tweets ayant au moins un term en commun)
             for term in TFIDFVectorIKeySet : neighboors|=tweetsPerTermMap[term]
 
-            print "neighboors :",len(neighboors),"."
+            if (i%SHOW_RATE==0) : print "neighboors :",len(neighboors),"."
             for j in neighboors :
                 #Ignorer les tweets qui ne sont pas apres le tweetI
                 if (j<=i) : continue
