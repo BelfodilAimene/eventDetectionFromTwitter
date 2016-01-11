@@ -104,8 +104,8 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
             TFIDFVectors.append(TFVector)
             tweetIndex+=1
 
-        #Pass 1 on terms - Finalize IDFVectors and transform timeSerieMap to FinestHaarTransform of series
-        # timeSerieMap = {term : {cell : [haarTransform,[sum for each timescale],[std for each time scale]], ...}, ...}
+        #Pass 1 on terms - Finalize IDFVectors and transform timeSerieMap to haarSerieMap of series
+        #haarSerieMap = {term : {cell : [haarTransform,[sum for each timescale],[std for each time scale]], ...}, ...}
         print "\t\tPass 1 on terms - Finalize IDFVectors and transform timeSerieMap to FinestHaarTransform of series"
         TERM_INDEX=0
         SHOW_RATE=100
