@@ -177,28 +177,27 @@ class MEDSimilarityMatrixBuilder2(SimilarityMatrixBuilder) :
                 positionJ=tweetJ.position
 
                 keysIntersection=TFIDFVectorIKeySet & TFIDFVectorJKeySet
-                if (keysIntersection) :
-                    #---------------------------------------------------------------------------
-                    #  Calculate TF IDF similarity and SST Similarity
-                    #---------------------------------------------------------------------------
+                #---------------------------------------------------------------------------
+                #  Calculate TF IDF similarity and SST Similarity
+                #---------------------------------------------------------------------------
                     
-                    STFIDF=0
-                    SST=None
+                STFIDF=0
+                SST=None
 
-                    spatialScale=scaleNumber
-                    distanceBetweetTweets=positionI.approxDistance(positionJ)
-                    while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[scaleNumber-spatialScale]) : spatialScale-=1
-                    temporalScale=scaleNumber+1-spatialScale
+                spatialScale=scaleNumber
+                distanceBetweetTweets=positionI.approxDistance(positionJ)
+                while (spatialScale>1 and distanceBetweetTweets>scalesMaxDistances[scaleNumber-spatialScale]) : spatialScale-=1
+                temporalScale=scaleNumber+1-spatialScale
                     
-                    for term in keysIntersection :
-                        STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
-                        correlation=DWTBasedCorrelation(cellIHaarSerieByTerm[term],cellJHaarSerieByTerm[term],temporalScale)
-                        if (SST<correlation) : SST=correlation
+                for term in keysIntersection :
+                    STFIDF+=TFIDFVectorI[term]*TFIDFVectorJ[term]
+                    correlation=DWTBasedCorrelation(cellIHaarSerieByTerm[term],cellJHaarSerieByTerm[term],temporalScale)
+                    if (SST<correlation) : SST=correlation
 
-                    #---------------------------------------------------------------------------
-                    #  Calculate the similarity
-                    #---------------------------------------------------------------------------
-                    if (SST>0) : M[i,j]=SST*STFIDF
+                #---------------------------------------------------------------------------
+                #  Calculate the similarity
+                #---------------------------------------------------------------------------
+                if (SST>0) : M[i,j]=SST*STFIDF
                     
         return coo_matrix(M)
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
