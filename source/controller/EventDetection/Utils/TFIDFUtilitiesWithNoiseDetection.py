@@ -1,5 +1,4 @@
-import re, numpy as np
-from math import log,sqrt,pi
+import re, math, numpy as np
 from ....model.Position import DEG_LATITUDE_IN_METER
 
 #Text processing constant
@@ -26,17 +25,8 @@ def getListOfTermFromText(text) :
     regex="|".join(DELIMITERS)
     terms=re.split(regex,text)
     #clean
-    terms=[term for term in terms if 2<len(term)<31]
+    terms=[term for term in terms if TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE]
     return terms
-
-def getTermOccurencesVector(text) :
-    termOccurences={}
-    terms=getListOfTermFromText(text)
-    numberOfTerms=len(terms)
-    for term in terms :
-        try: termOccurences[term] += 1
-        except KeyError: termOccurences[term]  = 1
-    return termOccurences
 
 def getTFVector(text) :
     TFVector={}
@@ -59,15 +49,40 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
     i=0
     #TFVecrors construction
     for tweet in tweets :
+        #---------------------------------------------------------------------------
+        #      Text processing
+        #---------------------------------------------------------------------------
+        text=tweet.text
+        #Convert to lower case
+        text = text.lower()
+        #Convert www.* or https?://* to ""
+        text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
+        #Convert @username to ""
+        text = re.sub('@[^\s]+','',text)
+        #Remove additional white spaces
+        text = re.sub('[\s]+', ' ', text)
+        #trim
+        text = text.strip('\'"')
+        #split
+        regex="|".join(DELIMITERS)
+        terms=re.split(regex,text)
 
-        #TFVectors construction
-        TFVector=getTFVector(tweet.text)
+        TFVector={}
+        terms=getListOfTermFromText(text)
+        numberOfTerms=len(terms)
+        baseFrequency=1./numberOfTerms if (numberOfTerms>0) else 0
+        for term in terms :
+            try: TFVector[term] += baseFrequency
+            except KeyError: TFVector[term] = baseFrequency
+            
         TFVectors.append(TFVector)
         for term in TFVector :
-            try: IDFVector[term] += 1
-            except KeyError: IDFVector[term] = 1
-            try: TweetPerTermMap[term].add(i)
-            except KeyError: TweetPerTermMap[term] = set([i])
+            if term in IDFVector :
+                IDFVector[term] += 1
+                TweetPerTermMap[term].add(i)
+            else : 
+                IDFVector[term] = 1
+                TweetPerTermMap[term] = set([i])
 
         #For estimating the total area for noise filtering
         if (tweet.position.latitude<minLat) : minLat=tweet.position.latitude
@@ -109,7 +124,7 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
                     while (k>=0 and distanceIJ<=S_FOR_FILTERING[k]) :
                         numberOfTweetsPerThres[k]+=1
                         k-=1
-            LValuesPerThres=[sqrt(((2*totalArea*numPerThres)/numberOfTweetOfThisTerm)/pi)-thres for thres,numPerThres in zip(S_FOR_FILTERING,numberOfTweetsPerThres)]
+            LValuesPerThres=[math.sqrt(((2*totalArea*numPerThres)/numberOfTweetOfThisTerm)/math.pi)-thres for thres,numPerThres in zip(S_FOR_FILTERING,numberOfTweetsPerThres)]
             meanLValue=sum(LValuesPerThres)/len(LValuesPerThres)
             if (meanLValue<THRESHOLD_FOR_FILTERING) : termToDelete=True
 
@@ -120,10 +135,10 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
                 TFVectorI=TFVectors[i]
                 del TFVectorI[term]
             del TweetPerTermMap[term]
+            continue
 
         #Preserve Term and MAJ IDFVector value
-        else :
-            IDFVector[term]=log(float(numberOfTweets)/IDFVector[term],10)
+        IDFVector[term]=math.log(float(numberOfTweets)/IDFVector[term],10)
 
     #-----------------------------------------------------------------------
     """
@@ -140,13 +155,12 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
     for TFVector in TFVectors :
         TFIDFVector={}
         TFIDFVectorNorm=0
-        for term in TFVector :
-            TFIDF=TFVector[term]*IDFVector[term]
+        for term,tf in TFVector.iteritems() :
+            TFIDF=tf*IDFVector[term]
             TFIDFVector[term]=TFIDF
-            TFIDFVectorNorm+=TFIDF**2
-        TFIDFVectorNorm=sqrt(TFIDFVectorNorm)
-        for term in TFIDFVector :
-            TFIDFVector[term]/=TFIDFVectorNorm
+            TFIDFVectorNorm+=math.pow(TFIDF,2)
+        TFIDFVectorNorm=math.sqrt(TFIDFVectorNorm)
+        for term in TFIDFVector : TFIDFVector[term]/=TFIDFVectorNorm
         TFIDFVectors.append(TFIDFVector)
-            
+        
     return TFIDFVectors,TweetPerTermMap
