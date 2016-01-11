@@ -1,8 +1,10 @@
-import math
-import numpy as np
+import math,numpy as np
 
+#Earth radius in meter
 EARTH_RADIUS=6378137
-DEG_LATITUDE_IN_METER = 111320 #1 degree in latitude is equal to 111320 m
+
+#One degree in latitude is equal to 111320 m
+DEG_LATITUDE_IN_METER = 111320 
 
 class Position :
     def __init__(self,latitude,longitude) :

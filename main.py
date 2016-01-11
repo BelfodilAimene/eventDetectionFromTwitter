@@ -24,10 +24,8 @@ def detectEvents(limit=200,similarityType=MED_SIM,printEvents=False,drawEvents=F
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
 
-    if similarityType==LED_SIM :
-        s=LEDSimilarityMatrixBuilder(timeThreshold=1800,distanceThreshold=100)
-    else :
-        s=MEDSimilarityMatrixBuilder(timeResolution=1800,distanceResolution=100,scaleNumber=4)
+    if similarityType==LED_SIM : s=LEDSimilarityMatrixBuilder(timeThreshold=1800,distanceThreshold=100)
+    else : s=MEDSimilarityMatrixBuilder(timeResolution=1800,distanceResolution=100,scaleNumber=4)
 
     eventDetector=EventDetector(tweets,s)
     events=eventDetector.getEvents()
@@ -36,13 +34,12 @@ def detectEvents(limit=200,similarityType=MED_SIM,printEvents=False,drawEvents=F
     print "{0} Event detected : ".format(len(events))
     print "-"*40
 
-    if printEvents :
-        eventDetector.showTopKEvents(topk=10)
+    if printEvents : eventDetector.showTopKEvents(topk=10)
 
     if drawEvents :
         print "drawing ..."
         eventDetector.drawEvents()
-
+    
     return events
     
 

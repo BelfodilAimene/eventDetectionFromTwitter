@@ -1,8 +1,15 @@
-import numpy as np
+import re, numpy as np
 from math import log,sqrt,pi
-import re
+from ....model.Position import DEG_LATITUDE_IN_METER
 
+#Text processing constant
 DELIMITERS=[",",";",":","!","\?","/","\*","=","\+","-","\."," ","\(","\)","\[","\]","\{","\}","'"]
+TERM_MINIMAL_SIZE=2
+TERM_MAXIMAL_SIZE=31
+
+#Noisy term in space filtering constant
+S_FOR_FILTERING=[200,400,600,800,1000]
+THRESHOLD_FOR_FILTERING=500
 
 def getListOfTermFromText(text) :
     #Convert to lower case
@@ -41,20 +48,15 @@ def getTFVector(text) :
         except KeyError: TFVector[term] = baseFrequency  
     return TFVector
 
-S_FOR_FILTERING=[200,400,600,800,1000]
-THRESHOLD_FOR_FILTERING=500
-DEG_LATITUDE_IN_M = 111320 #1 degree in latitude is equal to 111320 m
-
 def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with_poisson_Law=True) :
     numberOfTweets=len(tweets)
     TFVectors=[]
     IDFVector={}
     TweetPerTermMap={}
-    i=0
-
     minLat=maxLat=tweets[0].position.latitude
     minLon=maxLon=tweets[0].position.longitude
 
+    i=0
     #TFVecrors construction
     for tweet in tweets :
 
@@ -75,7 +77,7 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
 
         i+=1
 
-    totalArea=(maxLat-minLat)*(maxLon-minLon)*DEG_LATITUDE_IN_M*DEG_LATITUDE_IN_M
+    totalArea=(maxLat-minLat)*(maxLon-minLon)*DEG_LATITUDE_IN_METER*DEG_LATITUDE_IN_METER
 
     #-----------------------------------------------------------------------
     """
@@ -98,10 +100,12 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
             numberOfTweetsPerThres=[0]*len(S_FOR_FILTERING)
             for indiceI in range(numberOfTweetOfThisTerm) :
                 tweetI=tweets[tweetsOfTerm[indiceI]]
+                positionI=tweetI.position
                 for indiceJ in range(indiceI+1,numberOfTweetOfThisTerm) :
                     tweetJ=tweets[tweetsOfTerm[indiceJ]]
+                    positionJ=tweetJ.position
                     k=len(S_FOR_FILTERING)-1
-                    distanceIJ=tweetI.position.approxDistance(tweetJ.position)
+                    distanceIJ=positionI.approxDistance(positionJ)
                     while (k>=0 and distanceIJ<=S_FOR_FILTERING[k]) :
                         numberOfTweetsPerThres[k]+=1
                         k-=1
@@ -146,4 +150,3 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
         TFIDFVectors.append(TFIDFVector)
             
     return TFIDFVectors,TweetPerTermMap
-            

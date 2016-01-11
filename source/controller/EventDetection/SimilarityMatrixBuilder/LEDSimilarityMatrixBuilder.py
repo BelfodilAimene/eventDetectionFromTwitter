@@ -1,12 +1,9 @@
 import numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from sklearn.neighbors import NearestNeighbors
-
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
 from ..Utils.TFIDFUtilitiesWithNoiseDetection import getTweetsTFIDFVectorAndNorm
-
-DEG_LATITUDE_IN_METER = 111320 #1 degree in latitude is equal to 111320 m
-MINIMAL_TERM_PER_TWEET=5
+from ....model.Position import DEG_LATITUDE_IN_METER
 
 class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
     def __init__(self,timeThreshold,distanceThreshold) :
@@ -17,7 +14,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         self.timeThreshold=timeThreshold
         self.distanceThreshold=distanceThreshold
         
-    def build(self,tweets) :
+    def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=True) :
         """
         Return an upper sparse triangular matrix of similarity j>i
         """
@@ -27,7 +24,7 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
 
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
         print "      Calculating TF-IDF vectors ..."
-        TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=MINIMAL_TERM_PER_TWEET, remove_noise_with_poisson_Law=False)
+        TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=minimalTermPerTweet, remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
         print "      Constructing similarity matrix ..."
 
         distanceThresholdInDegree=distanceThreshold/DEG_LATITUDE_IN_METER
@@ -67,6 +64,3 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                 M[i,j]=similarity
 
         return coo_matrix(M)
-        
-
-            
