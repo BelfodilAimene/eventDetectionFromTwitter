@@ -3,104 +3,85 @@ from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
 from ...model.Position import Position,DEG_LATITUDE_IN_METER
 from ...model.Event import Event
+from Utils.Constants import *
 
-#Text processing constant
-DELIMITERS=[",",";",":","!","\?","/","\*","=","\+","-","\."," ","\(","\)","\[","\]","\{","\}","'"]
-TERM_MINIMAL_SIZE=2
-TERM_MAXIMAL_SIZE=31
-
-#Noisy term in space filtering constant
-S_FOR_FILTERING=[200,400,600,800,1000]
-THRESHOLD_FOR_FILTERING=500
-
-class EventDetectorMEDBased :
-    def __init__(self,tweets,timeResolution=1800,distanceResolution=100,scaleNumber=4,userNumberThreshold=3,tweetsNumberThreshold=3) :
+class OptimisedEventDetectorMEDBased :
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    #   Constructeur de la classe
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    def __init__(self,tweets,timeResolution=1800,distanceResolution=100,scaleNumber=4) :
         """
         timeResolution : define the time resolution for time series
         distanceResolution : define a cell size in meter (not exact)
         scaleNumber : nscale in the paper
         """
+        
         self.tweets=np.array(tweets)
         self.timeResolution=timeResolution
         self.distanceResolution=distanceResolution
         self.scaleNumber=scaleNumber
-        self.userNumberThreshold=userNumberThreshold
-        self.tweetsNumberThreshold=tweetsNumberThreshold
+        self.events=[]
 
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    #   Event detection
+    #-------------------------------------------------------------------------------------------------------------------------------------
     def getEvents(self,minimalTermPerTweet=5,remove_noise_with_poisson_Law=False) :
+        """
+        get the list of important events
+        """
+        
         print "Detecting events ..."
         realClusters=self.getClusters(minimalTermPerTweet=minimalTermPerTweet, remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
         clustersUniqueId=set(realClusters)
         events=[]
-        print "   Constructing events from clusters ..."
+        print "\tConstructing events from clusters ..."
         for clusterId in clustersUniqueId :
             tweetsOfClusterId=self.tweets[realClusters==clusterId]
             event=Event(tweetsOfClusterId)
-            if (self.isEventImportant(event)) :
-                events.append(event)
+            if (self.isEventImportant(event)) : events.append(event)
         self.events=events
         return events
-
-    #Post-processing the events
+    
     def isEventImportant(self,event) :
-        cnd1=event.userNumber >= self.userNumberThreshold and len(event.tweets) >= self.tweetsNumberThreshold
-        if (not cnd1) : return False
-
-        MAX_TOLERATED=0.5
+        """
+        evaluate if yes or no the event is important
+        """
+        if (event.userNumber < MIN_USER_NUMBER or len(event.tweets) < MIN_TWEETS_NUMBER) : return False
         tweetPerUserNumber={}
         for tweet in self.tweets :
             try : tweetPerUserNumber[tweet.userId]+=1
             except KeyError : tweetPerUserNumber[tweet.userId]=1
         maximumProportionInThisEvent=float(tweetPerUserNumber[max(list(tweetPerUserNumber), key=lambda userId : tweetPerUserNumber[userId])])/len(self.tweets)
-        cnd2=(maximumProportionInThisEvent<MAX_TOLERATED)
-        return cnd2
+        return (maximumProportionInThisEvent<MAX_TOLERATED_PER_USER)
 
-    #---------------- Visualize -----------------------------------------------------------------------#
-    def getStringOfEvent(self,event) :
-        NUM_DIGIT=10**2
-        SEPARATOR="\t|"
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    #   Clusterin and Similarity matrix construction
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    def getClusters(self,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
+        """
+        This method use ModularityOptimizer.jar
+        """
+        realClusters=[]
+        weightsFilePath="input.txt"
+        clusterFilePath="output.txt"
 
-        PERCENTAGE=0.8
-        firstIndiceOfInterval=0
-        lastIndiceOfInterval=int(PERCENTAGE*len(event.tweets))
-        estimatedEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
-        firstIndiceOfInterval+=1
-        lastIndiceOfInterval+=1
-        while (lastIndiceOfInterval<len(event.tweets)) :
-            newEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
-            if (newEventDuration<estimatedEventDuration) : estimatedEventDuration=newEventDuration
-            firstIndiceOfInterval+=1
-            lastIndiceOfInterval+=1
-            
-        S="|"+SEPARATOR.join([str(event.eventMedianTime),
-                              str(int(estimatedEventDuration)),
-                              str(float(int(NUM_DIGIT*event.eventCenter.latitude))/NUM_DIGIT),
-                              str(float(int(NUM_DIGIT*event.eventCenter.longitude))/NUM_DIGIT),
-                              str(float(int(NUM_DIGIT*event.eventRadius))/NUM_DIGIT),
-                              str(event.userNumber),
-                              str(len(event.tweets)),
-                              ",".join(event.importantHashtags)])+SEPARATOR
-        return S
-    
-    def showTopKEvents(self,topk=10) :
-        if not self.events :
-            "No events detected !"
-            return
-        SIZE_OF_LINE=40
-        SEPARATOR="\t|"
-        HEADER="|"+SEPARATOR.join(["Median time","estimated duration (s)","mean latitude","mean longitude","radius (m)","user number","tweets number","top hashtags"])+SEPARATOR
+        #Creating the input file
+        print "\tBuilding similarity matrix ..."        
+        self.build(minimalTermPerTweet=minimalTermPerTweet, remove_noise_with_poisson_Law=remove_noise_with_poisson_Law,similarityFilePath=weightsFilePath)
 
-        topKEvents=sorted(self.events,key=lambda event : len(event.tweets),reverse=True)[0:min(max(1,topk),len(self.events))]
-
-        print "-"*SIZE_OF_LINE
-        print HEADER
-        print "-"*SIZE_OF_LINE 
-        for event in topKEvents :
-            print self.getStringOfEvent(event)
-            print "-"*SIZE_OF_LINE
-
-    #----------------------------------------------------------------------------------------------------#
+        #Creating the output file (command execution)
+        print "\tClustering ..."
+        command = "java -jar ModularityOptimizer.jar {0} {1} 1 0.5 2 10 10 0 0".format(weightsFilePath,clusterFilePath)
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+        process.wait()
         
+        #Get The events
+        print "\tReading clusters from a file ..."
+        with open(clusterFilePath) as f :
+            realClusters=map(int,f.readlines())
+            return np.array(realClusters)
+    
+    
     def build(self,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False,similarityFilePath="input.txt") :
         """
         Return an upper sparse triangular matrix of similarity j>i
@@ -341,34 +322,52 @@ class EventDetectorMEDBased :
         if (lastvisted<numberOfTweets-1) : similarityFile.write("{0}\t{1}\t{2}\n".format(numberOfTweets-2,numberOfTweets-1,0))
         similarityFile.close();
 
-    def getClusters(self,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
-        """
-        This method use ModularityOptimizer.jar
-        """
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    #   Event vizualisation
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    def getStringOfEvent(self,event) :
+        NUM_DIGIT=10**2
+        SEPARATOR="\t|"
+        PERCENTAGE=0.8
         
-        print "   Building similarity matrix ..."
+        firstIndiceOfInterval,lastIndiceOfInterval=0,int(PERCENTAGE*len(event.tweets))
+        estimatedEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
 
-        
-        realClusters=[]
-        weightsFilePath="input.txt"
-        clusterFilePath="output.txt"
-
-        self.build(minimalTermPerTweet=minimalTermPerTweet, remove_noise_with_poisson_Law=remove_noise_with_poisson_Law,similarityFilePath=weightsFilePath)
-
-        # execute the command
-        print "   Clustering ..."
-        command = "java -jar ModularityOptimizer.jar {0} {1} 1 0.5 2 10 10 0 0".format(weightsFilePath,clusterFilePath)
-        #print command
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        process.wait()
-        
-        # get clusters from clusterFile (output of the command)
-        print "   Reading clusters from a file ..."
-        with open(clusterFilePath) as f :
-            realClusters=map(int,f.readlines())
-            return np.array(realClusters)
-
+        while (lastIndiceOfInterval<len(event.tweets)) :
+            newEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
+            if (newEventDuration<estimatedEventDuration) : estimatedEventDuration=newEventDuration
+            firstIndiceOfInterval+=1
+            lastIndiceOfInterval+=1
+            
+        S="|"+SEPARATOR.join([str(event.eventMedianTime),
+                              str(int(estimatedEventDuration)),
+                              str(float(int(NUM_DIGIT*event.eventCenter.latitude))/NUM_DIGIT),
+                              str(float(int(NUM_DIGIT*event.eventCenter.longitude))/NUM_DIGIT),
+                              str(float(int(NUM_DIGIT*event.eventRadius))/NUM_DIGIT),
+                              str(event.userNumber),
+                              str(len(event.tweets)),
+                              ",".join(event.importantHashtags)])+SEPARATOR
+        return S
     
+    def showTopEvents(self,top=10) :
+        if not self.events :
+            "No events detected !"
+            return
+        
+        SIZE_OF_LINE=40
+        SEPARATOR="\t|"
+        HEADER="|"+SEPARATOR.join(["Median time","estimated duration (s)","mean latitude","mean longitude","radius (m)","user number","tweets number","top hashtags"])+SEPARATOR
+
+        TopEvents=sorted(self.events,key=lambda event : len(event.tweets),reverse=True)[0:min(max(1,top),len(self.events))]
+
+        print "-"*SIZE_OF_LINE
+        print HEADER
+        print "-"*SIZE_OF_LINE 
+        for event in TopEvents :
+            print self.getStringOfEvent(event)
+            print "-"*SIZE_OF_LINE
+
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    Basic function to get the different scale of distance between minDistance anb maxDistance
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -380,6 +379,7 @@ def getScalesMaxDistances(minDistance,maxDistance,scaleNumber) :
         scalesMaxDistances.append(x)
         x*=alpha
     return scalesMaxDistances
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    Haar Transformation
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -399,7 +399,6 @@ def getFinestHaarTransform(timeSerieOfTermAndCell,temporalSeriesSize,scaleNumber
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
 #    DTW Correlation (for SST)
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def DWTBasedCorrelation(finestHaarTransform_1,finestHaarTransform_2,temporalScale) :
     std1=finestHaarTransform_1[2][temporalScale-1]
     std2=finestHaarTransform_2[2][temporalScale-1]

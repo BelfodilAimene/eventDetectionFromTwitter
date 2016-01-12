@@ -1,44 +1,8 @@
 import re, math, numpy as np
 from ....model.Position import DEG_LATITUDE_IN_METER
+from Constants import *
 
-#Text processing constant
-DELIMITERS=[",",";",":","!","\?","/","\*","=","\+","-","\."," ","\(","\)","\[","\]","\{","\}","'"]
-TERM_MINIMAL_SIZE=2
-TERM_MAXIMAL_SIZE=31
-
-#Noisy term in space filtering constant
-S_FOR_FILTERING=[200,400,600,800,1000]
-THRESHOLD_FOR_FILTERING=500
-
-def getListOfTermFromText(text) :
-    #Convert to lower case
-    text = text.lower()
-    #Convert www.* or https?://* to ""
-    text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
-    #Convert @username to ""
-    text = re.sub('@[^\s]+','',text)
-    #Remove additional white spaces
-    text = re.sub('[\s]+', ' ', text)
-    #trim
-    text = text.strip('\'"')
-    #split
-    regex="|".join(DELIMITERS)
-    terms=re.split(regex,text)
-    #clean
-    terms=[term for term in terms if TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE]
-    return terms
-
-def getTFVector(text) :
-    TFVector={}
-    terms=getListOfTermFromText(text)
-    numberOfTerms=len(terms)
-    baseFrequency=1./numberOfTerms if (numberOfTerms>0) else 0
-    for term in terms :
-        try: TFVector[term] += baseFrequency
-        except KeyError: TFVector[term] = baseFrequency  
-    return TFVector
-
-def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with_poisson_Law=True) :
+def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
     numberOfTweets=len(tweets)
     TFVectors=[]
     IDFVector={}
@@ -68,10 +32,10 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
         terms=re.split(regex,text)
 
         TFVector={}
-        terms=getListOfTermFromText(text)
         numberOfTerms=len(terms)
         baseFrequency=1./numberOfTerms if (numberOfTerms>0) else 0
         for term in terms :
+            if (TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE) : continue
             try: TFVector[term] += baseFrequency
             except KeyError: TFVector[term] = baseFrequency
             
@@ -89,15 +53,17 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
         elif (tweet.position.latitude>maxLat) : maxLat=tweet.position.latitude
         if (tweet.position.longitude<minLon) : minLon=tweet.position.longitude
         elif (tweet.position.longitude>maxLon) : maxLon=tweet.position.longitude
-
+        
         i+=1
 
     totalArea=(maxLat-minLat)*(maxLon-minLon)*DEG_LATITUDE_IN_METER*DEG_LATITUDE_IN_METER
 
     #-----------------------------------------------------------------------
     """
+    print "Before Filtering ..."
     print "Number of term : ", len(TweetPerTermMap)
     print "Number of non empty tweets : ",len([1 for tfv in TFVectors if len(tfv)>0])
+    print "-"*40
     """
     #-----------------------------------------------------------------------
 
@@ -142,7 +108,6 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
 
     #-----------------------------------------------------------------------
     """
-    print "-"*40
     print "After Filtering ..."
     print "Number of term : ", len(TweetPerTermMap)
     print "Number of non empty tweets : ",len([1 for tfv in TFVectors if len(tfv)>0])

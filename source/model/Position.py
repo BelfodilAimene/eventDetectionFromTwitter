@@ -1,15 +1,22 @@
 import math,numpy as np
-
-#Earth radius in meter
-EARTH_RADIUS=6378137
-
-#One degree in latitude is equal to 111320 m
-DEG_LATITUDE_IN_METER = 111320 
+from ..controller.EventDetection.Utils.Constants import *
 
 class Position :
     def __init__(self,latitude,longitude) :
         self.latitude=latitude
         self.longitude=longitude
+
+    def approxDistance(self,other) :
+        """
+        return euclidian distance approximation of the real distance
+        """
+        return math.sqrt(math.pow(self.longitude-other.longitude,2)+math.pow(self.latitude-other.latitude,2))*DEG_LATITUDE_IN_METER
+
+    def distanceP(self,other,p=2) :
+        """
+        return the p-minkowski distance between the two points
+        """
+        return ((self.longitude-other.longitude)**p+(self.latitude-other.latitude)**p)**(1./p)
 
     def distance(self,other) :
         """
@@ -31,18 +38,6 @@ class Position :
     
         arc = math.acos( cos )
         return round(EARTH_RADIUS*arc,4)
-
-    def approxDistance(self,other) :
-        """
-        return euclidian distance approximation of the real distance
-        """
-        return math.sqrt(math.pow(self.longitude-other.longitude,2)+math.pow(self.latitude-other.latitude,2))*DEG_LATITUDE_IN_METER
-
-    def distanceP(self,other,p=2) :
-        """
-        return the p-minkowski distance between the two points
-        """
-        return ((self.longitude-other.longitude)**p+(self.latitude-other.latitude)**p)**(1./p)
     
     def __str__(self) :
         return "({0},{1})".format(self.latitude,self.longitude)

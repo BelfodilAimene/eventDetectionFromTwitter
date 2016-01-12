@@ -1,9 +1,5 @@
-import numpy as np
-from math import log,sqrt
-import re
-
-DELIMITERS=[",",";",":","!","\?","/","\*","=","\+","-","\."," ","\(","\)","\[","\]","\{","\}","'"]
-
+import re, math, numpy as np
+from Constants import DELIMITERS
 
 def getListOfTermFromText(text) :
     #Convert to lower case
@@ -20,7 +16,7 @@ def getListOfTermFromText(text) :
     regex="|".join(DELIMITERS)
     terms=re.split(regex,text)
     #clean
-    terms=[term for term in terms if 2<len(term)<31]
+    terms=[term for term in terms if TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE]
     return terms
 
 def getTermOccurencesVector(text) :
@@ -59,7 +55,7 @@ def getTweetsTFIDFVectorAndNorm(tweets) :
             except KeyError: TweetPerTermMap[term] = set([i])
             
     for term in IDFVector :
-        IDFVector[term]=log(float(numberOfTweets)/IDFVector[term],10)
+        IDFVector[term]=math.log(float(numberOfTweets)/IDFVector[term],10)
 
     TFIDFVectors=[]
     TFIDFVectorsNorms=[]
@@ -70,7 +66,7 @@ def getTweetsTFIDFVectorAndNorm(tweets) :
             TFIDF=TFVector[term]*IDFVector[term]
             TFIDFVector[term]=TFIDF
             TFIDFVectorNorm+=TFIDF**2
-        TFIDFVectorNorm=sqrt(TFIDFVectorNorm)
+        TFIDFVectorNorm=math.sqrt(TFIDFVectorNorm)
         TFIDFVectorsNorms.append(TFIDFVectorNorm)
         TFIDFVectors.append(TFIDFVector)
             
