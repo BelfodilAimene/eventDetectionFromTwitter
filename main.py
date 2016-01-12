@@ -10,6 +10,7 @@ from source.controller.EventDetection.EventDetector import EventDetector
 
 LED_SIM=0
 MED_SIM=1
+NUMBER_OF_TWEETS=56021
 
 def getTweetsFromTwitterAndSave(count=100,export=False) :
     mongoDBHandler=MongoDBHandler()
@@ -35,7 +36,7 @@ def detectEvents(limit=200,similarityType=MED_SIM,printEvents=False,drawEvents=F
     print "{0} Event detected : ".format(len(events))
     print "-"*40
 
-    if printEvents : eventDetector.showTopKEvents(topk=10)
+    if printEvents : eventDetector.showTopEvents(top=10)
 
     if drawEvents :
         print "drawing ..."
@@ -54,12 +55,12 @@ def detectEventsMED(limit=200,minimalTermPerTweet=5,remove_noise_with_poisson_La
     eventDetector.showTopEvents(top=10)
     return events
     
-NUMBER_OF_TWEETS=56021
+
 def main() :
     staringTime=time.time()
 
-    #detectEvents(limit=2000,similarityType=MED_SIM,printEvents=True)
-    detectEventsMED(limit=2000,minimalTermPerTweet=5,remove_noise_with_poisson_Law=False)
+    #detectEvents(limit=300,similarityType=MED_SIM,printEvents=True)
+    detectEventsMED(limit=300,minimalTermPerTweet=5,remove_noise_with_poisson_Law=False)
     
     elapsed_time=(time.time()-staringTime)
 

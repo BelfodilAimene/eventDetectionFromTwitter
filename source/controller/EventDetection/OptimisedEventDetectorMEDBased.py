@@ -7,7 +7,7 @@ from Utils.Constants import *
 
 class OptimisedEventDetectorMEDBased :
     #-------------------------------------------------------------------------------------------------------------------------------------
-    #   Constructeur de la classe
+    #   Class constructor
     #-------------------------------------------------------------------------------------------------------------------------------------
     def __init__(self,tweets,timeResolution=1800,distanceResolution=100,scaleNumber=4) :
         """
@@ -55,7 +55,52 @@ class OptimisedEventDetectorMEDBased :
         return (maximumProportionInThisEvent<MAX_TOLERATED_PER_USER)
 
     #-------------------------------------------------------------------------------------------------------------------------------------
-    #   Clusterin and Similarity matrix construction
+    #   Event vizualisation
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    def getStringOfEvent(self,event) :
+        NUM_DIGIT=10**2
+        SEPARATOR="\t|"
+        PERCENTAGE=0.8
+        
+        firstIndiceOfInterval,lastIndiceOfInterval=0,int(PERCENTAGE*len(event.tweets))
+        estimatedEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
+
+        while (lastIndiceOfInterval<len(event.tweets)) :
+            newEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
+            if (newEventDuration<estimatedEventDuration) : estimatedEventDuration=newEventDuration
+            firstIndiceOfInterval+=1
+            lastIndiceOfInterval+=1
+            
+        S="|"+SEPARATOR.join([str(event.eventMedianTime),
+                              str(int(estimatedEventDuration)),
+                              str(float(int(NUM_DIGIT*event.eventCenter.latitude))/NUM_DIGIT),
+                              str(float(int(NUM_DIGIT*event.eventCenter.longitude))/NUM_DIGIT),
+                              str(float(int(NUM_DIGIT*event.eventRadius))/NUM_DIGIT),
+                              str(event.userNumber),
+                              str(len(event.tweets)),
+                              ",".join(event.importantHashtags)])+SEPARATOR
+        return S
+    
+    def showTopEvents(self,top=10) :
+        if not self.events :
+            "No events detected !"
+            return
+        
+        SIZE_OF_LINE=40
+        SEPARATOR="\t|"
+        HEADER="|"+SEPARATOR.join(["Median time","estimated duration (s)","mean latitude","mean longitude","radius (m)","user number","tweets number","top hashtags"])+SEPARATOR
+
+        TopEvents=sorted(self.events,key=lambda event : len(event.tweets),reverse=True)[0:min(max(1,top),len(self.events))]
+
+        print "-"*SIZE_OF_LINE
+        print HEADER
+        print "-"*SIZE_OF_LINE 
+        for event in TopEvents :
+            print self.getStringOfEvent(event)
+            print "-"*SIZE_OF_LINE
+
+    #-------------------------------------------------------------------------------------------------------------------------------------
+    #   Clustering and Similarity matrix construction
     #-------------------------------------------------------------------------------------------------------------------------------------
     def getClusters(self,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
         """
@@ -321,51 +366,6 @@ class OptimisedEventDetectorMEDBased :
                     similarityFile.write("{0}\t{1}\t{2}\n".format(i,j,SST*STFIDF))
         if (lastvisted<numberOfTweets-1) : similarityFile.write("{0}\t{1}\t{2}\n".format(numberOfTweets-2,numberOfTweets-1,0))
         similarityFile.close();
-
-    #-------------------------------------------------------------------------------------------------------------------------------------
-    #   Event vizualisation
-    #-------------------------------------------------------------------------------------------------------------------------------------
-    def getStringOfEvent(self,event) :
-        NUM_DIGIT=10**2
-        SEPARATOR="\t|"
-        PERCENTAGE=0.8
-        
-        firstIndiceOfInterval,lastIndiceOfInterval=0,int(PERCENTAGE*len(event.tweets))
-        estimatedEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
-
-        while (lastIndiceOfInterval<len(event.tweets)) :
-            newEventDuration=event.tweets[firstIndiceOfInterval].delay(event.tweets[lastIndiceOfInterval])
-            if (newEventDuration<estimatedEventDuration) : estimatedEventDuration=newEventDuration
-            firstIndiceOfInterval+=1
-            lastIndiceOfInterval+=1
-            
-        S="|"+SEPARATOR.join([str(event.eventMedianTime),
-                              str(int(estimatedEventDuration)),
-                              str(float(int(NUM_DIGIT*event.eventCenter.latitude))/NUM_DIGIT),
-                              str(float(int(NUM_DIGIT*event.eventCenter.longitude))/NUM_DIGIT),
-                              str(float(int(NUM_DIGIT*event.eventRadius))/NUM_DIGIT),
-                              str(event.userNumber),
-                              str(len(event.tweets)),
-                              ",".join(event.importantHashtags)])+SEPARATOR
-        return S
-    
-    def showTopEvents(self,top=10) :
-        if not self.events :
-            "No events detected !"
-            return
-        
-        SIZE_OF_LINE=40
-        SEPARATOR="\t|"
-        HEADER="|"+SEPARATOR.join(["Median time","estimated duration (s)","mean latitude","mean longitude","radius (m)","user number","tweets number","top hashtags"])+SEPARATOR
-
-        TopEvents=sorted(self.events,key=lambda event : len(event.tweets),reverse=True)[0:min(max(1,top),len(self.events))]
-
-        print "-"*SIZE_OF_LINE
-        print HEADER
-        print "-"*SIZE_OF_LINE 
-        for event in TopEvents :
-            print self.getStringOfEvent(event)
-            print "-"*SIZE_OF_LINE
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
