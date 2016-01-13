@@ -6,6 +6,8 @@ from source.controller.EventDetection.SimilarityMatrixBuilder.LEDSimilarityMatri
 from source.controller.EventDetection.SimilarityMatrixBuilder.MEDSimilarityMatrixBuilder import MEDSimilarityMatrixBuilder
 from source.controller.EventDetection.OptimisedEventDetectorMEDBased import OptimisedEventDetectorMEDBased
 from source.controller.EventDetection.EventDetector import EventDetector
+
+from source.controller.EventDetection.Utils.Utils import *
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
 LED_SIM=0
@@ -72,8 +74,9 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     print "-"*40
 
 def main2() :
-    "hello"
+    cleanFile("D:\PRJS\input4_0_5.txt","D:\PRJS\input5_0_8.txt",minimumSimilarity=0.8,numberOfTweet=NUMBER_OF_TWEETS)
     
 #---------------------------------------------------------------------------------------------------------------------------------------------
     
-main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
+#main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
+main2()

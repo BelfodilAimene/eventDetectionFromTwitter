@@ -34,21 +34,23 @@ def plotSimilarityDistribution(sourcePath, granularity=0.001, maxI=100) :
     plt.title('Number of elements {0}'.format(numberOfElements))
     plt.show()
 
-def cleanFile(sourcePath,destinationPath, minimumSimilarity=0.01) :
+def cleanFile(sourcePath,destinationPath, minimumSimilarity=0.01,numberOfTweet=50000) :
     """
     clean a similarty file to another similarity file by removing all pair for whom the similarity  <  minimumSimilarity
     """
     sourceFile=open(sourcePath, 'r')
     destinationFile=open(destinationPath, 'w')
-    lastI=0
-    newI=0
+    lastI,newI,newJ=0,0,0
+    SHOW_RATE=20
     for line in sourceFile :
         liste=line.split("\t")
-        sim=float(liste[2])
-        newI=int(liste[0])
-        if (newI>lastI and newI%20==0) : print newI
+        newI,sim=int(liste[0]),float(liste[2])
+        temp=int(liste[1])
+        if (newI>lastI and newI%SHOW_RATE==0) : print newI
         lastI=newI
         if (sim<minimumSimilarity) : continue
         destinationFile.write(line)
+        if (temp>newJ) : newJ=temp
+    if (newJ<numberOfTweet-1) : destinationFile.write("{0}\t{1}\t{2}\n".format(numberOfTweet-2,numberOfTweet-1,0))
     sourceFile.close()
     destinationFile.close()
