@@ -5,7 +5,7 @@ from ....model.Position import Position
 from ..Utils.Constants import *
 
 class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
-    def __init__(self,timeResolution,distanceResolution,scaleNumber) :
+    def __init__(self,timeResolution=1800,distanceResolution=100,scaleNumber=4,minSimilarity=0.5) :
         """
         timeResolution : define the time resolution for time series
         distanceResolution : define a cell size in meter (not exact)
@@ -14,6 +14,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         self.timeResolution=timeResolution
         self.distanceResolution=distanceResolution
         self.scaleNumber=scaleNumber
+        self.minSimilarity=max(min(minSimilarity,1),0)
         
     def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
         """
@@ -22,6 +23,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         timeResolution=self.timeResolution
         distanceResolution=self.distanceResolution
         scaleNumber=self.scaleNumber
+        minSimilarity=self.minSimilarity
         
         numberOfTweets=len(tweets)
         floatNumberOfTweets=float(numberOfTweets)
@@ -246,7 +248,8 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                 #---------------------------------------------------------------------------
                 #  Calculate the similarity
                 #---------------------------------------------------------------------------
-                if (SST>0) : M[i,j]=SST*STFIDF
+                calculatedSim=SST*STFIDF
+                if (calculatedSim>=minSimilarity) : M[i,j]=SST*STFIDF
                     
         return coo_matrix(M)
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------

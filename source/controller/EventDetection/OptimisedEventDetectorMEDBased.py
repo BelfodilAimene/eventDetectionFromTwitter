@@ -9,7 +9,7 @@ class OptimisedEventDetectorMEDBased :
     #-------------------------------------------------------------------------------------------------------------------------------------
     #   Class constructor
     #-------------------------------------------------------------------------------------------------------------------------------------
-    def __init__(self,tweets,timeResolution=1800,distanceResolution=100,scaleNumber=4) :
+    def __init__(self,tweets,timeResolution=1800,distanceResolution=100,scaleNumber=4,minSimilarity=0.5) :
         """
         timeResolution : define the time resolution for time series
         distanceResolution : define a cell size in meter (not exact)
@@ -20,6 +20,7 @@ class OptimisedEventDetectorMEDBased :
         self.timeResolution=timeResolution
         self.distanceResolution=distanceResolution
         self.scaleNumber=scaleNumber
+        self.minSimilarity=max(min(minSimilarity,1),0)
         self.events=[]
 
     #-------------------------------------------------------------------------------------------------------------------------------------
@@ -136,6 +137,7 @@ class OptimisedEventDetectorMEDBased :
         distanceResolution=self.distanceResolution
         scaleNumber=self.scaleNumber
         tweets=self.tweets
+        minSimilarity=self.minSimilarity
         
         numberOfTweets=len(tweets)
         floatNumberOfTweets=float(numberOfTweets)
@@ -316,7 +318,7 @@ class OptimisedEventDetectorMEDBased :
         SHOW_RATE=10
 
         similarityFile=open(similarityFilePath, 'w')
-        
+        lastvisted=0
         for i in range(numberOfTweets) :
             tweetI,TFIDFVectorI,cellI=tweets[i],TFIDFVectors[i],cellOfTweet[i]
             if (not TFIDFVectorI) : continue
@@ -363,8 +365,9 @@ class OptimisedEventDetectorMEDBased :
                 #  Calculate the similarity
                 #---------------------------------------------------------------------------
                 if (SST>0) :
-                    lastvisted=j
-                    similarityFile.write("{0}\t{1}\t{2}\n".format(i,j,SST*STFIDF))
+                    if (j>lastvisted) : lastvisted=j
+                    calculatedSim=SST*STFIDF
+                    if (calculatedSim>=minSimilarity) : similarityFile.write("{0}\t{1}\t{2}\n".format(i,j,SST*STFIDF))
         if (lastvisted<numberOfTweets-1) : similarityFile.write("{0}\t{1}\t{2}\n".format(numberOfTweets-2,numberOfTweets-1,0))
         similarityFile.close();
 
