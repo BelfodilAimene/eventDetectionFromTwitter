@@ -18,7 +18,7 @@ REMOVE_NOISE_WITH_POISSON_LAW=False
 TIME_RESOLUTION=1800
 DISTANCE_RESOLUTION=100
 SCALE_NUMBER=4
-MIN_SIMILARITY=0.5
+MIN_SIMILARITY=0
 
 NUMBER_OF_TWEETS=56021
 
@@ -70,6 +70,10 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     print "-"*40
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
+
+def main2() :
+    "hello"
+    
 #---------------------------------------------------------------------------------------------------------------------------------------------
     
 main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)

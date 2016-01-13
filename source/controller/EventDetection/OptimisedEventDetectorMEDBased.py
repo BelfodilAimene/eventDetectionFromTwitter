@@ -367,7 +367,7 @@ class OptimisedEventDetectorMEDBased :
                 if (SST>0) :
                     if (j>lastvisted) : lastvisted=j
                     calculatedSim=SST*STFIDF
-                    if (calculatedSim>=minSimilarity) : similarityFile.write("{0}\t{1}\t{2}\n".format(i,j,SST*STFIDF))
+                    if (calculatedSim>0 and calculatedSim>=minSimilarity) : similarityFile.write("{0}\t{1}\t{2}\n".format(i,j,SST*STFIDF))
         if (lastvisted<numberOfTweets-1) : similarityFile.write("{0}\t{1}\t{2}\n".format(numberOfTweets-2,numberOfTweets-1,0))
         similarityFile.close();
 

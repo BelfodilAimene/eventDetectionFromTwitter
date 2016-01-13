@@ -249,7 +249,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                 #  Calculate the similarity
                 #---------------------------------------------------------------------------
                 calculatedSim=SST*STFIDF
-                if (calculatedSim>=minSimilarity) : M[i,j]=SST*STFIDF
+                if (calculatedSim>0 and calculatedSim>=minSimilarity) : M[i,j]=SST*STFIDF
                     
         return coo_matrix(M)
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
