@@ -124,6 +124,9 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     print "-"*40
 
 def main2(limit=NUMBER_OF_TWEETS,similarityFile="input.txt",clusterFile="output.txt") :
+    """
+    WARNING : use this function only if you know what tweets were used to construct this cluster file !
+    """
     staringTime=time.time()
     #cleanFile("D:\PRJS\input4_0_5.txt","D:\PRJS\input5_0_8.txt",minimumSimilarity=0.8,numberOfTweet=NUMBER_OF_TWEETS)
     #detectEventsFromSimilarityFile(limit=limit,similarityFile=similarityFile)
