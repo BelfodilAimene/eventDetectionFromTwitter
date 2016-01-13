@@ -6,7 +6,7 @@ class JavaBasedLouvainClusterer(LouvainClusterer) :
     def __init__(self,tweets,similarityMatrix) :
         self.tweets=tweets
         self.similarityMatrix=similarityMatrix
-
+        
     def getClusters(self) :
         """
         This method use ModularityOptimizer.jar
@@ -27,16 +27,24 @@ class JavaBasedLouvainClusterer(LouvainClusterer) :
         with open(weightsFilePath, 'w') as weightsFile :
             weightsFile.write(lines)
             
+        return clusterFromSimilarityFile(weightsFilePath=weightsFilePath,clusterFilePath=clusterFilePath)
+
+def clusterFromSimilarityFile(weightsFilePath="input.txt",clusterFilePath="output.txt") :
+    # execute the command
+    print "\tClustering ..."
+    command = "java -jar ModularityOptimizer.jar {0} {1} 1 0.5 2 10 10 0 0".format(weightsFilePath,clusterFilePath)
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    process.wait()
+    return getClusterFromOutputFile(clusterFilePath)   
+    
+
+def getClusterFromOutputFile(clusterFilePath="input.txt") :
+    # get clusters from clusterFile (output of the command)
+    print "\tReading clusters from a file ..."
+    with open(clusterFilePath) as f :
+        realClusters=map(int,f.readlines())
+        return np.array(realClusters)
+    
         
-        # execute the command
-        print "   Clustering ..."
-        command = "java -jar ModularityOptimizer.jar {0} {1} 1 0.5 2 10 10 0 0".format(weightsFilePath,clusterFilePath)
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        process.wait()
         
-        # get clusters from clusterFile (output of the command)
-        print "   Reading clusters from a file ..."
-        with open(clusterFilePath) as f :
-            realClusters=map(int,f.readlines())
-            return np.array(realClusters)
             
