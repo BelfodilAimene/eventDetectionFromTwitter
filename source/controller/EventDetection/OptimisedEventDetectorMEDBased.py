@@ -1,7 +1,7 @@
 import sys,subprocess,math,re,numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-from ...model.Position import Position,DEG_LATITUDE_IN_METER
+from ...model.Position import Position
 from ...model.Event import Event
 from Utils.Constants import *
 
@@ -31,6 +31,7 @@ class OptimisedEventDetectorMEDBased :
         """
         
         print "Detecting events ..."
+
         realClusters=self.getClusters(minimalTermPerTweet=minimalTermPerTweet, remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
         clustersUniqueId=set(realClusters)
         events=[]

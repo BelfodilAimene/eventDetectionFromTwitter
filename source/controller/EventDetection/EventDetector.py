@@ -18,9 +18,13 @@ class EventDetector :
     #-------------------------------------------------------------------------------------------------------------------------------------
     #   Event detection
     #-------------------------------------------------------------------------------------------------------------------------------------
-    def getEvents(self) :
+    def getEvents(self,minimalTermPerTweet=5,remove_noise_with_poisson_Law=False) :
         print "Detecting events ..."
-        louvainClusterer=LouvainClusterer(self.tweets,self.similarityMatrixBuilder)
+
+        print "\tBuilding similarity matrix ..."
+        similarityMatrix = self.similarityMatrixBuilder.build(self.tweets,minimalTermPerTweet=minimalTermPerTweet,remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
+ 
+        louvainClusterer=LouvainClusterer(self.tweets,similarityMatrix)
         realClusters=louvainClusterer.getClusters()
         clustersUniqueId=set(realClusters)
         events=[]

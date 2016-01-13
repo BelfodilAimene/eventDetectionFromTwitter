@@ -3,14 +3,14 @@ from scipy.sparse import dok_matrix,coo_matrix,csr_matrix
 from LouvainClusterer import LouvainClusterer
 
 class OurLouvainClusterer(LouvainClusterer) :
-    def __init__(self,tweets,similarityMatrixBuilder) :
+    def __init__(self,tweets,similarityMatrix) :
         self.tweets=tweets
-        self.similarityMatrixBuilder=similarityMatrixBuilder
+        self.similarityMatrix=similarityMatrix
 
     def getClusters(self) :
         PASS=1
         
-        matrix=csr_matrix(self.similarityMatrixBuilder.build(self.tweets))
+        matrix=csr_matrix(self.similarityMatrixBuilder)
         continu=True
         realClusters=[]
         clusters=[]

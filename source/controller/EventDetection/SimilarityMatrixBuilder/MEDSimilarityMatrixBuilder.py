@@ -1,16 +1,8 @@
 import math,re,numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-from ....model.Position import Position,DEG_LATITUDE_IN_METER
-
-#Text processing constant
-DELIMITERS=[",",";",":","!","\?","/","\*","=","\+","-","\."," ","\(","\)","\[","\]","\{","\}","'"]
-TERM_MINIMAL_SIZE=2
-TERM_MAXIMAL_SIZE=31
-
-#Noisy term in space filtering constant
-S_FOR_FILTERING=[200,400,600,800,1000]
-THRESHOLD_FOR_FILTERING=500
+from ....model.Position import Position
+from ..Utils.Constants import *
 
 class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
     def __init__(self,timeResolution,distanceResolution,scaleNumber) :

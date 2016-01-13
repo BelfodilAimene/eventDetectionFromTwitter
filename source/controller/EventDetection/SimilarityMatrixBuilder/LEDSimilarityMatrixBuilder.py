@@ -2,8 +2,8 @@ import numpy as np
 from scipy.sparse import dok_matrix,coo_matrix
 from sklearn.neighbors import NearestNeighbors
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
-from ..Utils.TFIDFUtilitiesWithNoiseDetection import getTweetsTFIDFVectorAndNorm
-from ....model.Position import DEG_LATITUDE_IN_METER
+from ..Utils.TFIDFUtilities import getTweetsTFIDFVectorAndNorm
+from ..Utils.Constants import DEG_LATITUDE_IN_METER
 
 class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
     def __init__(self,timeThreshold,distanceThreshold) :

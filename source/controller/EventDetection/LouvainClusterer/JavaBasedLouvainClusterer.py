@@ -3,17 +3,16 @@ from scipy.sparse import dok_matrix
 from LouvainClusterer import LouvainClusterer
 
 class JavaBasedLouvainClusterer(LouvainClusterer) :
-    def __init__(self,tweets,similarityMatrixBuilder) :
+    def __init__(self,tweets,similarityMatrix) :
         self.tweets=tweets
-        self.similarityMatrixBuilder=similarityMatrixBuilder
+        self.similarityMatrix=similarityMatrix
 
     def getClusters(self) :
         """
         This method use ModularityOptimizer.jar
         """
-        
-        print "   Building similarity matrix ..."
-        similarityMatrix = self.similarityMatrixBuilder.build(self.tweets)
+       
+        similarityMatrix=self.similarityMatrix
         matrixSize=similarityMatrix.shape[0]
         
         realClusters=[]
