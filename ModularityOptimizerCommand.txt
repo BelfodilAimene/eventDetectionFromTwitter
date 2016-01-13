@@ -1,0 +1,1 @@
+java -jar ModularityOptimizer.jar input.txt output.txt 1 0.5 2 10 10 0 0
