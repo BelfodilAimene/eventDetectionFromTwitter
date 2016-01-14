@@ -70,6 +70,16 @@ def showTermOccurenceSignal(limit=300,topTermOrder=1, granularity=3600, dyadic=T
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTermApparitionInTime(tweets,topTermOrder=topTermOrder, granularity=granularity, dyadic=dyadic)
+
+def showTweetsSpaceDistribution(limit=300) :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    plotTweetsInSpaceDistribution(tweets)
+
+def showTermSpaceDistribution(limit=300,topTermOrder=0) :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    plotTweetsInSpaceDistribution(tweets,topTermOrder=topTermOrder)
 #---------------------------------------------------------------------------------------------------------------------------------------------  
 def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     staringTime=time.time()
@@ -81,4 +91,6 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
 #---------------------------------------------------------------------------------------------------------------------------------------------
 #main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
 #showTweetsNumberSignal(limit=NUMBER_OF_TWEETS,granularity=3600, dyadic=True)
-showTermOccurenceSignal(limit=NUMBER_OF_TWEETS,topTermOrder=1, granularity=3600, dyadic=True)
+#showTermOccurenceSignal(limit=NUMBER_OF_TWEETS,topTermOrder=300, granularity=3600, dyadic=True)
+#showTweetsSpaceDistribution(limit=NUMBER_OF_TWEETS)
+showTermSpaceDistribution(limit=NUMBER_OF_TWEETS,topTermOrder=0) 

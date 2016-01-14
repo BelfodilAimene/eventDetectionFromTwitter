@@ -2,9 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
 from TFIDFUtilities import *
-#----------------------------------------------------------------
-#         Plot things 
-#----------------------------------------------------------------
+
+#--------------------------------------------------------------------------------------------
+#         Plot time distribution 
+#--------------------------------------------------------------------------------------------
+
 def plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True) :
     """
     Plot the tweets number signal in time
@@ -81,6 +83,40 @@ def plotTermApparitionInTime(tweets,topTermOrder=0, granularity=3600, dyadic=Tru
     plt.ylabel("Nombre de tweets contenant le terme")
     plt.title('Nombre total de tweets contenant le terme "{1}" = {0}'.format(len(tweetOfTerm),term))
     plt.show()
+
+#--------------------------------------------------------------------------------------------
+#         Plot space distribution 
+#--------------------------------------------------------------------------------------------
+
+def plotTweetsInSpaceDistribution(tweets) :
+    xList,yList=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweets])
+    plt.figure(1)
+    plt.clf()
+    plt.plot(xList,yList, 'o', markerfacecolor='k',markeredgecolor='k', markersize=2)
+    plt.xlabel("latitude")
+    plt.ylabel("longitude")
+    plt.title('Nombre total de tweets {0}'.format(len(tweets)))
+    plt.show()
+
+def plotTweetsInSpaceDistribution(tweets,topTermOrder=0) :
+    TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False)
+    term = sorted(list(TweetPerTermMap),key=lambda element : len(TweetPerTermMap[element]),reverse=True)[topTermOrder]
+    tweetOfTerm=[tweets[k] for k in TweetPerTermMap[term]]
+    xListBack,yListBack=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweets])
+    xList,yList=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweetOfTerm])
+
+    plt.figure(1)
+    plt.clf()
+    plt.plot(xListBack,yListBack, 'o', markerfacecolor='0.75',markeredgecolor='0.75', markersize=2)
+    plt.plot(xList,yList, 'o', markerfacecolor='r',markeredgecolor='r', markersize=2)
+    plt.xlabel("latitude")
+    plt.ylabel("longitude")
+    plt.title('Nombre total de tweets contenant le terme "{1}" = {0}'.format(len(tweetOfTerm),term))
+    plt.show()
+    
+#--------------------------------------------------------------------------------------------
+#         Plot similarity distribution 
+#--------------------------------------------------------------------------------------------
   
 def plotSimilarityDistribution(sourcePath, granularity=0.001, maxI=100) :
     """
