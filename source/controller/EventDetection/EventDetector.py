@@ -36,43 +36,6 @@ class EventDetector :
         self.events=events
         return events
 
-    def getEventsFromSimilarityFile(self,similarityFilePath="input.txt") :
-        """
-        WARNING : use this function only if you know what tweets were used to construct this similarity file !
-        """
-        print "Detecting events ..."
-
-        clusterFilePath="output.txt"
-        realClusters=clusterFromSimilarityFile(similarityFilePath,clusterFilePath)
-        clustersUniqueId=set(realClusters)
-        events=[]
-        print "\tConstructing events from clusters ..."
-        for clusterId in clustersUniqueId :
-            tweetsOfClusterId=self.tweets[realClusters==clusterId]
-            event=Event(tweetsOfClusterId)
-            if (self.isEventImportant(event)) :
-                events.append(event)
-        self.events=events
-        return events
-
-    def getEventsFromClusterFile(self,clusterFilePath="input.txt") :
-        """
-        WARNING : use this function only if you know what tweets were used to construct this cluster file !
-        """
-        print "Detecting events ..."
-
-        realClusters=getClusterFromOutputFile(clusterFilePath)
-        clustersUniqueId=set(realClusters)
-        events=[]
-        print "\tConstructing events from clusters ..."
-        for clusterId in clustersUniqueId :
-            tweetsOfClusterId=self.tweets[realClusters==clusterId]
-            event=Event(tweetsOfClusterId)
-            if (self.isEventImportant(event)) :
-                events.append(event)
-        self.events=events
-        return events
-
     def isEventImportant(self,event) :
         """
         evaluate if yes or no the event is important

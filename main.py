@@ -65,84 +65,18 @@ def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_O
     
     return events
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def detectEventsFromSimilarityFile(limit=300,similarityFile="input.txt",printEvents=True,drawEvents=False) :
-    """
-    WARNING : use this function only if you know what tweets were used to construct this cluster file !
-    """
-    mongoDBHandler=MongoDBHandler()
-    tweets=mongoDBHandler.getAllTweets(limit=limit)
-    s=LEDSimilarityMatrixBuilder(timeThreshold=TIME_RESOLUTION,distanceThreshold=DISTANCE_RESOLUTION)
-    
-    eventDetector=EventDetector(tweets,s)
-    events=eventDetector.getEventsFromSimilarityFile(similarityFilePath=similarityFile)
-
-    print ""
-    print "-"*40
-    print "{0} Event detected : ".format(len(events))
-    print "-"*40
-
-    if printEvents :
-        eventDetector.showTopEvents(top=10)
-
-    if drawEvents :
-        print "drawing ..."
-        eventDetector.drawEvents()
-    
-    return events
-#---------------------------------------------------------------------------------------------------------------------------------------------
-def detectEventsFromCluster(limit=300,ClusterFile="input.txt",printEvents=True,drawEvents=False) :
-    """
-    WARNING : use this function only if you know what tweets were used to construct this cluster file !
-    """
-    mongoDBHandler=MongoDBHandler()
-    tweets=mongoDBHandler.getAllTweets(limit=limit)
-    s=LEDSimilarityMatrixBuilder(timeThreshold=TIME_RESOLUTION,distanceThreshold=DISTANCE_RESOLUTION)
-    
-    eventDetector=EventDetector(tweets,s)
-    events=eventDetector.getEventsFromClusterFile(clusterFilePath=ClusterFile)
-
-    print ""
-    print "-"*40
-    print "{0} Event detected : ".format(len(events))
-    print "-"*40
-
-    if printEvents :
-        eventDetector.showTopEvents(top=10)
-
-    if drawEvents :
-        print "drawing ..."
-        eventDetector.drawEvents()
-    
-    return events
-#---------------------------------------------------------------------------------------------------------------------------------------------
 def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     staringTime=time.time()
-    #detectEvents(limit=limit,similarityType=similarityType)
+    detectEvents(limit=limit,similarityType=similarityType)
 
-    mongoDBHandler=MongoDBHandler()
-    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    #mongoDBHandler=MongoDBHandler()
+    #tweets=mongoDBHandler.getAllTweets(limit=limit)
     #plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True)
-    plotTermApparitionInTime(tweets,topTermOrder=1, granularity=3600, dyadic=True)
+    #plotTermApparitionInTime(tweets,topTermOrder=1, granularity=3600, dyadic=True)
     
     elapsed_time=(time.time()-staringTime)
     print "-"*40
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
-
-
-def main2(limit=NUMBER_OF_TWEETS,similarityFile="input.txt",clusterFile="output.txt") :
-    """
-    WARNING : use this function only if you know what tweets were used to construct this cluster file !
-    """
-    staringTime=time.time()
-    #cleanFile("D:\PRJS\input4_0_5.txt","D:\PRJS\input5_0_8.txt",minimumSimilarity=0.8,numberOfTweet=NUMBER_OF_TWEETS)
-    #detectEventsFromSimilarityFile(limit=limit,similarityFile=similarityFile)
-    detectEventsFromCluster(limit=limit,ClusterFile=clusterFile)
-    elapsed_time=(time.time()-staringTime)
-    print "-"*40
-    print "Elapsed time : {0}s".format(elapsed_time)
-    print "-"*40
-    
 #---------------------------------------------------------------------------------------------------------------------------------------------
-main(limit=NUMBER_OF_TWEETS, similarityType=LED_SIM)
-#main2(limit=NUMBER_OF_TWEETS,similarityFile="input.txt",clusterFile="output_0_8.txt")
+main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
