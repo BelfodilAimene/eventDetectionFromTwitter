@@ -117,17 +117,18 @@ def detectEventsFromCluster(limit=300,ClusterFile="input.txt",printEvents=True,d
 #---------------------------------------------------------------------------------------------------------------------------------------------
 def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     staringTime=time.time()
-    detectEvents(limit=limit,similarityType=similarityType)
+    #detectEvents(limit=limit,similarityType=similarityType)
 
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
-    #plotTweetsApparitionInTime(tweets)
-    #plotTermApparitionInTime(tweets,"#prayforparis")
+    #plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True)
+    plotTermApparitionInTime(tweets,topTermOrder=1, granularity=3600, dyadic=True)
     
     elapsed_time=(time.time()-staringTime)
     print "-"*40
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
+
 
 def main2(limit=NUMBER_OF_TWEETS,similarityFile="input.txt",clusterFile="output.txt") :
     """
@@ -143,5 +144,5 @@ def main2(limit=NUMBER_OF_TWEETS,similarityFile="input.txt",clusterFile="output.
     print "-"*40
     
 #---------------------------------------------------------------------------------------------------------------------------------------------
-main(limit=300, similarityType=LED_SIM)
+main(limit=NUMBER_OF_TWEETS, similarityType=LED_SIM)
 #main2(limit=NUMBER_OF_TWEETS,similarityFile="input.txt",clusterFile="output_0_8.txt")

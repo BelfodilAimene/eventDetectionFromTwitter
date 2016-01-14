@@ -5,58 +5,77 @@ from TFIDFUtilities import *
 #----------------------------------------------------------------
 #         Plot things 
 #----------------------------------------------------------------
-def plotTweetsApparitionInTime(tweets, granularity=3600) :
-    sortedTweets=sorted(tweets, key=lambda tweet : tweet.time)
-    firstTweet=sortedTweets[0]
+def plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True) :
+    firstTweet=min(tweets, key=lambda tweet : tweet.time)
     agg={}
     for tweet in tweets :
         index=int(tweet.delay(firstTweet)/granularity)
         if (index in agg) : agg[index]+=1
         else : agg[index]=1
-    xList,yList=zip(*[(x,y) for x,y in agg.iteritems()])
-    xList=[firstTweet.time+timedelta(0,x*granularity) for x in xList]
+
+    xList,yList=[],[]
+    for x,y in agg.iteritems() :
+        xList.append(firstTweet.time+timedelta(0,x*granularity))
+        yList.append(y)
+        if (dyadic and granularity>1) :
+            if ((x-1) not in agg) :
+                xList.append(firstTweet.time+timedelta(0,x*granularity-1))
+                yList.append(0)
+            if ((x+1) not in agg) :
+                xList.append(firstTweet.time+timedelta(0,(x+1)*granularity))
+                yList.append(0)
+            xList.append(firstTweet.time+timedelta(0,(x+1)*granularity-1))
+            yList.append(y)
+
+    xList,yList=zip(*sorted(zip(xList,yList),key = lambda element : element[0])) 
+
     plt.figure(1)
     plt.clf()
     plt.plot(xList,yList, '-', markerfacecolor='k',markeredgecolor='k', markersize=1)
     plt.xlabel("Temps")
     plt.ylabel("Nombre de tweets")
-    plt.title('Nombre total de tweets {0}'.format(len(sortedTweets)))
+    plt.title('Nombre total de tweets {0}'.format(len(tweets)))
     plt.show()
 
-def plotTermApparitionInTime(tweets,term, granularity=3600) :
-    sortedTweets=sorted(tweets, key=lambda tweet : tweet.time)
-    firstTweet=sortedTweets[0]
-    lastTweet=sortedTweets[-1]
+def plotTermApparitionInTime(tweets,topTermOrder=0, granularity=3600, dyadic=True) :
+    firstTweet=min(tweets, key=lambda tweet : tweet.time)
+    lastTweet=max(tweets, key=lambda tweet : tweet.time)
     lastIndex=int(lastTweet.delay(firstTweet)/granularity)
-    agg={0:0,lastIndex:0}
-     
+    agg={}
+    TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False)
+
+    term = sorted(list(TweetPerTermMap),key=lambda element : len(TweetPerTermMap[element]),reverse=True)[topTermOrder]
+    tweetOfTerm=[tweets[k] for k in TweetPerTermMap[term]]
     
-    TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(sortedTweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False)
-    for t in TweetPerTermMap :
-        print t
-    if term in TweetPerTermMap :
-        tweetOfTerm=TweetPerTermMap[term]
-        for tweet in tweetOfTerm :
-            index=int(tweet.delay(firstTweet)/granularity)
-            if (index in agg) : agg[index]+=1
-            else : agg[index]=1
-            
-    xList,yList=zip(*[(x,y) for x,y in agg.iteritems()])
-    xList=[firstTweet.time+timedelta(0,x*granularity) for x in xList]
+    for tweet in tweetOfTerm :
+        index=int(tweet.delay(firstTweet)/granularity)
+        if (index in agg) : agg[index]+=1
+        else : agg[index]=1
+
+    xList,yList=[],[]
+    for x,y in agg.iteritems() :
+        xList.append(firstTweet.time+timedelta(0,x*granularity))
+        yList.append(y)
+        if (dyadic and granularity>1) :
+            if ((x-1) not in agg) :
+                xList.append(firstTweet.time+timedelta(0,x*granularity-1))
+                yList.append(0)
+            if ((x+1) not in agg) :
+                xList.append(firstTweet.time+timedelta(0,(x+1)*granularity))
+                yList.append(0)
+            xList.append(firstTweet.time+timedelta(0,(x+1)*granularity-1))
+            yList.append(y)
+
+    xList,yList=zip(*sorted(zip(xList,yList),key = lambda element : element[0]))
+    
     plt.figure(1)
     plt.clf()
     plt.plot(xList,yList, '-', markerfacecolor='k',markeredgecolor='k', markersize=1)
     plt.xlabel("Temps")
-    plt.ylabel("Nombre de tweets")
-    plt.title('Nombre total de tweets {0}'.format(len(sortedTweets)))
+    plt.ylabel("Nombre de tweets contenant le terme")
+    plt.title('Nombre total de tweets contenant le terme "{1}" = {0}'.format(len(tweetOfTerm),term))
     plt.show()
-
-
-#----------------------------------------------------------------
-        
-        
-    
-    
+#----------------------------------------------------------------   
 def plotSimilarityDistribution(sourcePath, granularity=0.001, maxI=100) :
     """
     plot the similarity distribution of the source path (written in the same syntax used for ModularityOptimizer jar input)
