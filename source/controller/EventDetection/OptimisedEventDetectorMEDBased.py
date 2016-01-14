@@ -3,7 +3,7 @@ from SimilarityMatrixBuilder import SimilarityMatrixBuilder
 from ...model.Position import Position
 from ...model.Event import Event
 from Utils.Constants import *
-
+import time
 class OptimisedEventDetectorMEDBased :
     #-------------------------------------------------------------------------------------------------------------------------------------
     #   Class constructor
@@ -132,6 +132,7 @@ class OptimisedEventDetectorMEDBased :
         """
         Return an upper sparse triangular matrix of similarity j>i
         """
+        staringTime=time.time()
         timeResolution=self.timeResolution
         distanceResolution=self.distanceResolution
         scaleNumber=self.scaleNumber
@@ -220,7 +221,7 @@ class OptimisedEventDetectorMEDBased :
         SHOW_RATE=100
         print "\t\t\tNumber of terms :",len(IDFVector)
         for term,numberOfTweetOfThisTerm in IDFVector.iteritems() :
-            if (TERM_INDEX%SHOW_RATE==0) : print "\t\t\t",TERM_INDEX
+            #if (TERM_INDEX%SHOW_RATE==0) : print "\t\t\t",TERM_INDEX
             TERM_INDEX+=1
 
             #---------------------------------------------------------------------
@@ -310,7 +311,11 @@ class OptimisedEventDetectorMEDBased :
 
         #delete IDFVector
         IDFVector.clear()
-        
+
+        elapsed_time=(time.time()-staringTime)
+        print "-"*40
+        print "Elapsed time : {0}s".format(elapsed_time)
+        print "-"*40
         #Done with preparation : TFIDFVectors, tweetsPerTermMap, haarSerieMap
         #Now is the time to construct the similarity matrix
         print "\t\tConstructing Similarity Matrix ..."

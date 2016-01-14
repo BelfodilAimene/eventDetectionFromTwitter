@@ -1,22 +1,58 @@
 import numpy as np
-import matplotlib.pyplot as plt    
+import matplotlib.pyplot as plt
+from datetime import timedelta
+from TFIDFUtilities import *
+#----------------------------------------------------------------
+#         Plot things 
+#----------------------------------------------------------------
 def plotTweetsApparitionInTime(tweets, granularity=3600) :
-    firstTweet=min(tweets, key=lambda tweet : tweet.time)
+    sortedTweets=sorted(tweets, key=lambda tweet : tweet.time)
+    firstTweet=sortedTweets[0]
     agg={}
     for tweet in tweets :
-        index=tweet.delay(firstTweet)/granularity
+        index=int(tweet.delay(firstTweet)/granularity)
         if (index in agg) : agg[index]+=1
         else : agg[index]=1
-    print agg
-    """
+    xList,yList=zip(*[(x,y) for x,y in agg.iteritems()])
+    xList=[firstTweet.time+timedelta(0,x*granularity) for x in xList]
     plt.figure(1)
     plt.clf()
-    plt.plot(values,distribution, '-', markerfacecolor='k',markeredgecolor='k', markersize=1)
-    plt.xlabel("values")
-    plt.ylabel("number")
-    plt.title('Number of elements {0}'.format(numberOfElements))
+    plt.plot(xList,yList, '-', markerfacecolor='k',markeredgecolor='k', markersize=1)
+    plt.xlabel("Temps")
+    plt.ylabel("Nombre de tweets")
+    plt.title('Nombre total de tweets {0}'.format(len(sortedTweets)))
     plt.show()
-    """
+
+def plotTermApparitionInTime(tweets,term, granularity=3600) :
+    sortedTweets=sorted(tweets, key=lambda tweet : tweet.time)
+    firstTweet=sortedTweets[0]
+    lastTweet=sortedTweets[-1]
+    lastIndex=int(lastTweet.delay(firstTweet)/granularity)
+    agg={0:0,lastIndex:0}
+     
+    
+    TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(sortedTweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False)
+    for t in TweetPerTermMap :
+        print t
+    if term in TweetPerTermMap :
+        tweetOfTerm=TweetPerTermMap[term]
+        for tweet in tweetOfTerm :
+            index=int(tweet.delay(firstTweet)/granularity)
+            if (index in agg) : agg[index]+=1
+            else : agg[index]=1
+            
+    xList,yList=zip(*[(x,y) for x,y in agg.iteritems()])
+    xList=[firstTweet.time+timedelta(0,x*granularity) for x in xList]
+    plt.figure(1)
+    plt.clf()
+    plt.plot(xList,yList, '-', markerfacecolor='k',markeredgecolor='k', markersize=1)
+    plt.xlabel("Temps")
+    plt.ylabel("Nombre de tweets")
+    plt.title('Nombre total de tweets {0}'.format(len(sortedTweets)))
+    plt.show()
+
+
+#----------------------------------------------------------------
         
         
     

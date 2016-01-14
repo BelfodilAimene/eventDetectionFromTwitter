@@ -35,7 +35,7 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
         numberOfTerms=len(terms)
         baseFrequency=1./numberOfTerms if (numberOfTerms>0) else 0
         for term in terms :
-            if (TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE) : continue
+            if (len(term)<=TERM_MINIMAL_SIZE or len(term)>=TERM_MAXIMAL_SIZE) : continue
             try: TFVector[term] += baseFrequency
             except KeyError: TFVector[term] = baseFrequency
             
