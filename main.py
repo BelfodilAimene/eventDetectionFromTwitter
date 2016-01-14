@@ -35,7 +35,7 @@ def getTweetsFromJSONRepositoryAndSave(repositoryPath="E:\\tweets") :
     mongoDBHandler=MongoDBHandler()
     mongoDBHandler.saveTweetsFromJSONRepository(repositoryPath)
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True,drawEvents=False) :
+def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True) :
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
 
@@ -59,24 +59,26 @@ def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_O
     if printEvents :
         eventDetector.showTopEvents(top=10)
 
-    if drawEvents :
-        print "drawing ..."
-        eventDetector.drawEvents()
-    
     return events
 #---------------------------------------------------------------------------------------------------------------------------------------------
+def showTweetsNumberSignal(limit=300,granularity=3600, dyadic=True) :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    plotTweetsApparitionInTime(tweets, granularity=granularity, dyadic=dyadic)
+
+def showTermOccurenceSignal(limit=300,topTermOrder=1, granularity=3600, dyadic=True) :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    plotTermApparitionInTime(tweets,topTermOrder=topTermOrder, granularity=granularity, dyadic=dyadic)
+#---------------------------------------------------------------------------------------------------------------------------------------------  
 def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     staringTime=time.time()
     detectEvents(limit=limit,similarityType=similarityType)
-
-    #mongoDBHandler=MongoDBHandler()
-    #tweets=mongoDBHandler.getAllTweets(limit=limit)
-    #plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True)
-    #plotTermApparitionInTime(tweets,topTermOrder=1, granularity=3600, dyadic=True)
-    
     elapsed_time=(time.time()-staringTime)
     print "-"*40
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
 #---------------------------------------------------------------------------------------------------------------------------------------------
-main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
+#main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
+#showTweetsNumberSignal(limit=NUMBER_OF_TWEETS,granularity=3600, dyadic=True)
+showTermOccurenceSignal(limit=NUMBER_OF_TWEETS,topTermOrder=1, granularity=3600, dyadic=True)

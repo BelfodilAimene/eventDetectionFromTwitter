@@ -33,9 +33,8 @@ def detectEvents(limit=300,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_w
     print "-"*40
     print "{0} Event detected : ".format(len(events))
     print "-"*40
-
-    if printEvents :
-        eventDetector.showTopEvents(top=10)
+    
+    if printEvents : eventDetector.showTopEvents(top=10)
 
     return events
 #---------------------------------------------------------------------------------------------------------------------------------------------
@@ -47,5 +46,4 @@ def main(limit=300) :
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
 #---------------------------------------------------------------------------------------------------------------------------------------------
-#main(limit=NUMBER_OF_TWEETS)
 main(limit=NUMBER_OF_TWEETS)

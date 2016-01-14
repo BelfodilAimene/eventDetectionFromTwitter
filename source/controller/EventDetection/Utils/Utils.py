@@ -6,6 +6,9 @@ from TFIDFUtilities import *
 #         Plot things 
 #----------------------------------------------------------------
 def plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True) :
+    """
+    Plot the tweets number signal in time
+    """
     firstTweet=min(tweets, key=lambda tweet : tweet.time)
     agg={}
     for tweet in tweets :
@@ -38,6 +41,9 @@ def plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True) :
     plt.show()
 
 def plotTermApparitionInTime(tweets,topTermOrder=0, granularity=3600, dyadic=True) :
+    """
+    Plot a term occurence signal in time
+    """
     firstTweet=min(tweets, key=lambda tweet : tweet.time)
     lastTweet=max(tweets, key=lambda tweet : tweet.time)
     lastIndex=int(lastTweet.delay(firstTweet)/granularity)
@@ -75,10 +81,10 @@ def plotTermApparitionInTime(tweets,topTermOrder=0, granularity=3600, dyadic=Tru
     plt.ylabel("Nombre de tweets contenant le terme")
     plt.title('Nombre total de tweets contenant le terme "{1}" = {0}'.format(len(tweetOfTerm),term))
     plt.show()
-#----------------------------------------------------------------   
+  
 def plotSimilarityDistribution(sourcePath, granularity=0.001, maxI=100) :
     """
-    plot the similarity distribution of the source path (written in the same syntax used for ModularityOptimizer jar input)
+    Plot the similarity distribution of the source path (written in the same syntax used for ModularityOptimizer jar input)
     wrt. of a granularity and a maximum I (the last tweet order) 
     """
     sourceFile=open(sourcePath, 'r')
@@ -108,24 +114,3 @@ def plotSimilarityDistribution(sourcePath, granularity=0.001, maxI=100) :
     plt.ylabel("number")
     plt.title('Number of elements {0}'.format(numberOfElements))
     plt.show()
-
-def cleanFile(sourcePath,destinationPath, minimumSimilarity=0.01,numberOfTweet=50000) :
-    """
-    clean a similarty file to another similarity file by removing all pair for whom the similarity  <  minimumSimilarity
-    """
-    sourceFile=open(sourcePath, 'r')
-    destinationFile=open(destinationPath, 'w')
-    lastI,newI,newJ=0,0,0
-    SHOW_RATE=20
-    for line in sourceFile :
-        liste=line.split("\t")
-        newI,sim=int(liste[0]),float(liste[2])
-        temp=int(liste[1])
-        if (newI>lastI and newI%SHOW_RATE==0) : print newI
-        lastI=newI
-        if (sim<minimumSimilarity) : continue
-        destinationFile.write(line)
-        if (temp>newJ) : newJ=temp
-    if (newJ<numberOfTweet-1) : destinationFile.write("{0}\t{1}\t{2}\n".format(numberOfTweet-2,numberOfTweet-1,0))
-    sourceFile.close()
-    destinationFile.close()
