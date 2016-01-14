@@ -1,6 +1,7 @@
 import json
 from ...model.Tweet import Tweet
 from ...model.Position import Position
+from dateutil import parser
 
 #-------------------------------------------------------------
 def getTweetFromJSON(jsonText) :
@@ -12,7 +13,7 @@ def getTweetFromJSON(jsonText) :
     hashtags=[element["text"] for element in jsonData["entities"]["hashtags"]]
     #------------------------------------------------
     s=jsonData["created_at"]
-    time=parse(s)
+    time=parser.parse(s)
     #-----Position ----------------------------------
     position=None
     if jsonData["coordinates"] :

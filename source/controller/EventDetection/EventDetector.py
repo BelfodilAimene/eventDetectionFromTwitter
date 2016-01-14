@@ -1,5 +1,4 @@
 import numpy as np
-from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 
 from ...model.Event import Event
@@ -130,19 +129,6 @@ class EventDetector :
         for event in TopEvents :
             print self.getStringOfEvent(event)
             print "-"*SIZE_OF_LINE
-
-    def drawEvents(self) :
-        events=self.events
-        m = Basemap(width=1200000,height=1200000,projection='lcc',resolution='c',lat_0=46,lon_0=3.)
-        m.drawcoastlines()
-        m.drawmapboundary(fill_color='aqua')
-        m.fillcontinents(color='white',lake_color='aqua')
-        m.drawcountries()
-        for event in events :
-            xpt,ypt = m(event.eventCenter.longitude,event.eventCenter.latitude)
-            m.plot(xpt,ypt,'bo')
-        #m.bluemarble()
-        plt.show()
     #----------------------------------------------------------------------------------------------------#
     
     

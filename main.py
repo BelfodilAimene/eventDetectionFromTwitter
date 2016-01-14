@@ -33,7 +33,7 @@ def getTweetsFromTwitterAndSave(count=100,export=False) :
 #---------------------------------------------------------------------------------------------------------------------------------------------
 def getTweetsFromJSONRepositoryAndSave(repositoryPath="E:\\tweets") :
     mongoDBHandler=MongoDBHandler()
-    mongoDBHandler.saveTweetsFomJSONRepository(repositoryPath)
+    mongoDBHandler.saveTweetsFromJSONRepository(repositoryPath)
 #---------------------------------------------------------------------------------------------------------------------------------------------
 def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True,drawEvents=False) :
     mongoDBHandler=MongoDBHandler()
