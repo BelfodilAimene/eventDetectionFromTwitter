@@ -1,6 +1,26 @@
 import numpy as np
 import matplotlib.pyplot as plt    
-
+def plotTweetsApparitionInTime(tweets, granularity=3600) :
+    firstTweet=min(tweets, key=lambda tweet : tweet.time)
+    agg={}
+    for tweet in tweets :
+        index=tweet.delay(firstTweet)/granularity
+        if (index in agg) : agg[index]+=1
+        else : agg[index]=1
+    print agg
+    """
+    plt.figure(1)
+    plt.clf()
+    plt.plot(values,distribution, '-', markerfacecolor='k',markeredgecolor='k', markersize=1)
+    plt.xlabel("values")
+    plt.ylabel("number")
+    plt.title('Number of elements {0}'.format(numberOfElements))
+    plt.show()
+    """
+        
+        
+    
+    
 def plotSimilarityDistribution(sourcePath, granularity=0.001, maxI=100) :
     """
     plot the similarity distribution of the source path (written in the same syntax used for ModularityOptimizer jar input)

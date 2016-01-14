@@ -1,5 +1,4 @@
 import sys,subprocess,math,re,numpy as np
-from scipy.sparse import dok_matrix,coo_matrix
 from SimilarityMatrixBuilder import SimilarityMatrixBuilder
 from ...model.Position import Position
 from ...model.Event import Event
