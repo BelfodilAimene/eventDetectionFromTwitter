@@ -66,20 +66,30 @@ def showTweetsNumberSignal(limit=300,granularity=3600, dyadic=True) :
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTweetsApparitionInTime(tweets, granularity=granularity, dyadic=dyadic)
 
-def showTermOccurenceSignal(limit=300,topTermOrder=1, granularity=3600, dyadic=True) :
+def showTermOccurenceSignalByOrder(limit=300,topTermOrder=0, granularity=3600, dyadic=True) :
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
-    plotTermApparitionInTime(tweets,topTermOrder=topTermOrder, granularity=granularity, dyadic=dyadic)
+    plotTermApparitionInTimeWithOrder(tweets,topTermOrder=topTermOrder, granularity=granularity, dyadic=dyadic)
+
+def showTermOccurenceSignalByTerm(limit=300,term="#shopping", granularity=3600, dyadic=True) :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    plotTermApparitionInTime(tweets,term, granularity=granularity, dyadic=dyadic)
 
 def showTweetsSpaceDistribution(limit=300) :
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTweetsInSpaceDistribution(tweets)
 
-def showTermSpaceDistribution(limit=300,topTermOrder=0) :
+def showTermSpaceDistributionByOrder(limit=300,topTermOrder=0) :
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
-    plotTweetsInSpaceDistribution(tweets,topTermOrder=topTermOrder)
+    plotTermInSpaceDistributionWithOrder(tweets,topTermOrder=topTermOrder)
+
+def showTermSpaceDistributionByTerm(limit=300,term="#shopping") :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    plotTermInSpaceDistribution(tweets,term)
 #---------------------------------------------------------------------------------------------------------------------------------------------  
 def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     staringTime=time.time()
@@ -89,8 +99,10 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
 #---------------------------------------------------------------------------------------------------------------------------------------------
-#main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
+#main(limit=NUMBER_OF_TWEETS, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
 #showTweetsNumberSignal(limit=NUMBER_OF_TWEETS,granularity=3600, dyadic=True)
-#showTermOccurenceSignal(limit=NUMBER_OF_TWEETS,topTermOrder=300, granularity=3600, dyadic=True)
+#showTermOccurenceSignalByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=300, granularity=3600, dyadic=True)
+#showTermOccurenceSignalByTerm(limit=NUMBER_OF_TWEETS,term="bisous", granularity=3600, dyadic=True)
 #showTweetsSpaceDistribution(limit=NUMBER_OF_TWEETS)
-showTermSpaceDistribution(limit=NUMBER_OF_TWEETS,topTermOrder=0) 
+#showTermSpaceDistributionByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=0)
+showTermSpaceDistributionByTerm(limit=NUMBER_OF_TWEETS,term="bisous")
