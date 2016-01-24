@@ -20,7 +20,7 @@ REMOVE_NOISE_WITH_POISSON_LAW=False
 TIME_RESOLUTION=1800
 DISTANCE_RESOLUTION=100
 SCALE_NUMBER=4
-MIN_SIMILARITY=0
+MIN_SIMILARITY=0.5
 
 NUMBER_OF_TWEETS=56021
 
@@ -57,7 +57,7 @@ def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_O
     print "-"*40
 
     if printEvents :
-        eventDetector.showTopEvents(top=10)
+        eventDetector.showTopEvents(top=len(events))
 
     return events
 #---------------------------------------------------------------------------------------------------------------------------------------------
@@ -99,10 +99,13 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
 #---------------------------------------------------------------------------------------------------------------------------------------------
-#main(limit=NUMBER_OF_TWEETS, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
+
 #showTweetsNumberSignal(limit=NUMBER_OF_TWEETS,granularity=3600, dyadic=True)
 #showTermOccurenceSignalByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=300, granularity=3600, dyadic=True)
 #showTermOccurenceSignalByTerm(limit=NUMBER_OF_TWEETS,term="bisous", granularity=3600, dyadic=True)
 #showTweetsSpaceDistribution(limit=NUMBER_OF_TWEETS)
 #showTermSpaceDistributionByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=0)
-showTermSpaceDistributionByTerm(limit=NUMBER_OF_TWEETS,term="bisous")
+
+#---------------------------------------------------------------------------------------------------------------------------------------------
+
+main(limit=NUMBER_OF_TWEETS, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)

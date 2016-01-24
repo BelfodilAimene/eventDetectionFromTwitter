@@ -12,6 +12,10 @@ def plotTweetsApparitionInTime(tweets, granularity=3600, dyadic=True) :
     Plot the tweets number signal in time
     """
     firstTweet=min(tweets, key=lambda tweet : tweet.time)
+    lastTweet=max(tweets, key=lambda tweet : tweet.time)
+
+    print "First tweet :",firstTweet.time
+    print "Last tweet :",lastTweet.time
     agg={}
     for tweet in tweets :
         index=int(tweet.delay(firstTweet)/granularity)
@@ -135,9 +139,9 @@ def plotTweetsInSpaceDistribution(tweets) :
     xList,yList=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweets])
     plt.figure(1)
     plt.clf()
-    plt.plot(xList,yList, 'o', markerfacecolor='k',markeredgecolor='k', markersize=2)
-    plt.xlabel("latitude")
-    plt.ylabel("longitude")
+    plt.plot(yList,xList, 'o', markerfacecolor='k',markeredgecolor='k', markersize=2)
+    plt.xlabel("longitude")
+    plt.ylabel("latitude")
     plt.title('Nombre total de tweets {0}'.format(len(tweets)))
     plt.show()
 
@@ -152,10 +156,10 @@ def plotTermInSpaceDistribution(tweets,term) :
 
     plt.figure(1)
     plt.clf()
-    plt.plot(xListBack,yListBack, 'o', markerfacecolor='0.75',markeredgecolor='0.75', markersize=2)
-    plt.plot(xList,yList, 'o', markerfacecolor='r',markeredgecolor='r', markersize=2)
-    plt.xlabel("latitude")
-    plt.ylabel("longitude")
+    plt.plot(yListBack,xListBack, 'o', markerfacecolor='0.75',markeredgecolor='0.75', markersize=2)
+    plt.plot(yList,xList,  'o', markerfacecolor='r',markeredgecolor='r', markersize=2)
+    plt.xlabel("longitude")
+    plt.ylabel("latitude")
     plt.title('Nombre total de tweets contenant le terme "{1}" = {0}'.format(len(tweetOfTerm),term.encode("utf-8")))
     plt.show()
     
@@ -168,10 +172,10 @@ def plotTermInSpaceDistributionWithOrder(tweets,topTermOrder=0) :
 
     plt.figure(1)
     plt.clf()
-    plt.plot(xListBack,yListBack, 'o', markerfacecolor='0.75',markeredgecolor='0.75', markersize=2)
-    plt.plot(xList,yList, 'o', markerfacecolor='r',markeredgecolor='r', markersize=2)
-    plt.xlabel("latitude")
-    plt.ylabel("longitude")
+    plt.plot(yListBack,xListBack, 'o', markerfacecolor='0.75',markeredgecolor='0.75', markersize=2)
+    plt.plot(yList,xList,  'o', markerfacecolor='r',markeredgecolor='r', markersize=2)
+    plt.xlabel("longitude")
+    plt.ylabel("latitude")
     plt.title('Nombre total de tweets contenant le terme "{1}" = {0}'.format(len(tweetOfTerm),term.encode("utf-8")))
     plt.show()
     

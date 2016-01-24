@@ -221,8 +221,7 @@ class OptimisedEventDetectorMEDBased :
         SHOW_RATE=100
         print "\t\t\tNumber of terms :",len(IDFVector)
         for term,numberOfTweetOfThisTerm in IDFVector.iteritems() :
-            #if (TERM_INDEX%SHOW_RATE==0) : print "\t\t\t",TERM_INDEX
-            if (10<=numberOfTweetOfThisTerm<=15) : print term.encode("utf-8"),numberOfTweetOfThisTerm
+            if (TERM_INDEX%SHOW_RATE==0) : print "\t\t\t",TERM_INDEX
             TERM_INDEX+=1
 
             #---------------------------------------------------------------------
