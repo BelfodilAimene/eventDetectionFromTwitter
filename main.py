@@ -1,6 +1,7 @@
 import time
 from source.controller.DataManagement.MyTwitterAPI import MyTwitterAPI
 from source.controller.DataManagement.MongoDBHandler import MongoDBHandler
+from source.controller.DataManagement.TransformationUtilities import *
 
 from source.controller.EventDetection.SimilarityMatrixBuilder.LEDSimilarityMatrixBuilder import LEDSimilarityMatrixBuilder
 from source.controller.EventDetection.SimilarityMatrixBuilder.MEDSimilarityMatrixBuilder import MEDSimilarityMatrixBuilder
@@ -23,20 +24,25 @@ SCALE_NUMBER=4
 MIN_SIMILARITY=0
 
 NUMBER_OF_TWEETS=56021
+NUMBER_OF_TWEETS_MEHDI=798400
 
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def getTweetsFromTwitterAndSave(count=100,export=False) :
-    mongoDBHandler=MongoDBHandler()
+def getTweetsFromTwitterAndSave(count=100,export=False,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     api = MyTwitterAPI("twitter_config_file.txt")
     tweets = api.getTweets(count=count,export=export)
     mongoDBHandler.saveTweets(tweets)
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def getTweetsFromJSONRepositoryAndSave(repositoryPath="E:\\tweets") :
-    mongoDBHandler=MongoDBHandler()
+def getTweetsFromJSONRepositoryAndSave(repositoryPath="E:\\tweets",mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     mongoDBHandler.saveTweetsFromJSONRepository(repositoryPath)
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True,useOnlyHashtags=False) :
-    mongoDBHandler=MongoDBHandler()
+def getTweetsFromCSVFileAndSave(csvFilePath="D:\\PRJS\\Data\\final.csv",mongoDBName='Twitter',mongoCollectionName="tweetsMehdi") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
+    mongoDBHandler.saveTweetsFromCSVFile(csvFilePath)
+#---------------------------------------------------------------------------------------------------------------------------------------------
+def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True,useOnlyHashtags=False,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
 
     if similarityType==LED_SIM :
@@ -61,57 +67,59 @@ def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_O
 
     return events
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def showTweetsNumberSignal(limit=300,granularity=3600, dyadic=True) :
-    mongoDBHandler=MongoDBHandler()
+def showTweetsNumberSignal(limit=300,granularity=3600, dyadic=True,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTweetsApparitionInTime(tweets, granularity=granularity, dyadic=dyadic)
 
-def showTermOccurenceSignalByOrder(limit=300,topTermOrder=0, granularity=3600, dyadic=True) :
-    mongoDBHandler=MongoDBHandler()
+def showTermOccurenceSignalByOrder(limit=300,topTermOrder=0, granularity=3600, dyadic=True,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
-    plotTermApparitionInTimeWithOrder(tweets,topTermOrder=topTermOrder, granularity=granularity, dyadic=dyadic)
+    plotTermApparitionInTimeWithOrder(tweets,topTermOrder=topTermOrder, granularity=granularity, dyadic=dyadic,mongoDBName='Twitter',mongoCollectionName="tweets")
 
-def showTermOccurenceSignalByTerm(limit=300,term="#shopping", granularity=3600, dyadic=True) :
-    mongoDBHandler=MongoDBHandler()
+def showTermOccurenceSignalByTerm(limit=300,term="#shopping", granularity=3600, dyadic=True,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTermApparitionInTime(tweets,term, granularity=granularity, dyadic=dyadic)
 
-def showTweetsSpaceDistribution(limit=300) :
-    mongoDBHandler=MongoDBHandler()
+def showTweetsSpaceDistribution(limit=300,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTweetsInSpaceDistribution(tweets)
 
-def showTermSpaceDistributionByOrder(limit=300,topTermOrder=0) :
-    mongoDBHandler=MongoDBHandler()
+def showTermSpaceDistributionByOrder(limit=300,topTermOrder=0,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTermInSpaceDistributionWithOrder(tweets,topTermOrder=topTermOrder)
 
-def showTermSpaceDistributionByTerm(limit=300,term="#shopping") :
-    mongoDBHandler=MongoDBHandler()
+def showTermSpaceDistributionByTerm(limit=300,term="#shopping",mongoDBName='Twitter',mongoCollectionName="tweets") :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTermInSpaceDistribution(tweets,term)
 
-def showTermOccurenceDistribution(limit=300) :
-    mongoDBHandler=MongoDBHandler()
+def showTermOccurenceDistribution(limit=300,mongoDBName='Twitter',mongoCollectionName="tweets",useOnlyHashtags=False) :
+    mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
-    plotTermOccurencesDistribution(tweets)
-    
+    plotTermOccurencesDistribution(tweets,useOnlyHashtags=useOnlyHashtags)
 #---------------------------------------------------------------------------------------------------------------------------------------------  
-def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX,useOnlyHashtags=False) :
+def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX,useOnlyHashtags=False,mongoDBName='Twitter',mongoCollectionName="tweets") :
     staringTime=time.time()
-    detectEvents(limit=limit,similarityType=similarityType,useOnlyHashtags=useOnlyHashtags)
+    detectEvents(limit=limit,similarityType=similarityType,useOnlyHashtags=useOnlyHashtags,mongoDBName=mongoDBName,mongoCollectionName=mongoCollectionName)
     elapsed_time=(time.time()-staringTime)
     print "-"*40
     print "Elapsed time : {0}s".format(elapsed_time)
     print "-"*40
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
-#showTweetsNumberSignal(limit=NUMBER_OF_TWEETS,granularity=3600, dyadic=True)
+#---------------------------------------------------------------------------------------------------------------------------------------------
+#getTweetsFromCSVFileAndSave("D:\\PRJS\\Data\\final.csv",mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
+#---------------------------------------------------------------------------------------------------------------------------------------------
+#showTweetsNumberSignal(limit=NUMBER_OF_TWEETS_MEHDI,granularity=3600, dyadic=True,mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
 #showTermOccurenceSignalByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=1, granularity=3600, dyadic=True)
 #showTermOccurenceSignalByTerm(limit=NUMBER_OF_TWEETS,term="bisous", granularity=3600, dyadic=True)
-#showTweetsSpaceDistribution(limit=NUMBER_OF_TWEETS)
+#showTweetsSpaceDistribution(limit=300,mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
 #showTermSpaceDistributionByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=0)
-#showTermOccurenceDistribution(limit=NUMBER_OF_TWEETS)
+#showTermOccurenceDistribution(limit=NUMBER_OF_TWEETS_MEHDI,useOnlyHashtags=True,mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
 #---------------------------------------------------------------------------------------------------------------------------------------------
-
-main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX,useOnlyHashtags=True)
+#main(limit=300, similarityType=LED_SIM,useOnlyHashtags=True,mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
+#---------------------------------------------------------------------------------------------------------------------------------------------

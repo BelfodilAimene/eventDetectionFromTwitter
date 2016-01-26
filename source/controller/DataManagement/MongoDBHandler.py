@@ -3,24 +3,22 @@ from pymongo import MongoClient
 
 from ...model.Tweet import Tweet
 from ...model.Position import Position
-from TransformationUtilities import getTweetFromJSONFile
+from TransformationUtilities import getTweetFromJSONFile,getTweetFromCSVLine
 
 class MongoDBHandler :
-    def __init__(self,port=27017,database_name='Twitter') :
+    def __init__(self,port=27017,database_name='Twitter',collection_name="tweets") :
         self.client = MongoClient('localhost', port)
         self.db = self.client[database_name]
+        self.collection=self.db[collection_name]
 
     def saveTweet(self,tweet) :
-        collection = self.db['tweets']
-        collection.insert(MongoDBHandler.getDocumentFromTweet(tweet))
+        self.collection.insert(MongoDBHandler.getDocumentFromTweet(tweet))
         
     def saveTweets(self,tweets) :
-        collection = self.db['tweets']
-        collection.insert([MongoDBHandler.getDocumentFromTweet(tweet) for tweet in tweets])
+        self.collection.insert([MongoDBHandler.getDocumentFromTweet(tweet) for tweet in tweets])
 
     def getAllTweets(self,limit=50) :
-        collection = self.db['tweets']
-        documents=collection.find()[0:limit]
+        documents=self.collection.find()[0:limit]
         tweets=[MongoDBHandler.getTweetFromDocument(document) for document in documents]
         return tweets
 
@@ -36,7 +34,19 @@ class MongoDBHandler :
                 if (not ensureHavePosition or tweet.position) : self.saveTweet(tweet)
             except ValueError :
                 print jsonFilePath
-            
+
+    def saveTweetsFromCSVFile(self,csvFilePath,ensureHavePosition=True,keepOnlyTweetsWithHashtags=True) :
+        i=0
+        SHOW_RATE=1000
+        with open(csvFilePath) as f :
+            f.readline() #Header
+            print "Filling data base"
+            for line in f :
+                tweet=getTweetFromCSVLine(line)
+                if ((not ensureHavePosition or tweet.position) and (not keepOnlyTweetsWithHashtags or tweet.hashtags)) :
+                    self.saveTweet(tweet)
+                    i+=1
+                    if (i%SHOW_RATE==0) : print "\t",i
         
     @staticmethod
     def getDocumentFromTweet(tweet) :
@@ -62,11 +72,3 @@ class MongoDBHandler :
         if (document["position"]) :
             position=Position(document["position"][0],document["position"][1])
         return Tweet(_id,userId,text,hashtags,time,position)
-        
-        
-        
-        
-        
-        
-   
-        

@@ -5,19 +5,38 @@ from TFIDFUtilities import *
 #--------------------------------------------------------------------------------------------
 #        Plot term occurences distribution
 #--------------------------------------------------------------------------------------------
-def plotTermOccurencesDistribution(tweets) :
-    TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False)
+def plotTermOccurencesDistribution(tweets,useOnlyHashtags=False) :
+    TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False,useOnlyHashtags=useOnlyHashtags)
     termsAndTermsOccurences=sorted([(term,len(tweetList)) for term,tweetList in TweetPerTermMap.iteritems()],key = lambda couple : couple[1],reverse=True) 
     terms,termsOccurences=zip(*termsAndTermsOccurences)
+    numberOfHashMore10=0
+    numberOfHashMore100=0
+    numberOfHashMore1000=0
+    numberOfHashMore10000=0
 
+    for term,occ in termsAndTermsOccurences :
+        if occ>=10000 : numberOfHashMore10000+=1
+        if occ>=1000 : numberOfHashMore1000+=1
+        if occ>=100 : numberOfHashMore100+=1
+        if occ>=10 : numberOfHashMore10+=1
+        else : break
+
+    print "Number of hashtags occuring in more than 10 000 tweets :",numberOfHashMore10000
+    print "Number of hashtags occuring in more than  1 000 tweets :",numberOfHashMore1000
+    print "Number of hashtags occuring in more than    100 tweets :",numberOfHashMore100
+    print "Number of hashtags occuring in more than     10 tweets :",numberOfHashMore10
+        
+    """
     plt.figure(1)
     plt.clf()
     plt.plot(range(len(terms)),termsOccurences, 'b-')
     plt.xlabel("termes")
     plt.ylabel("Nombre de tweets")
     plt.yscale("log")
-    plt.title('Nombre total des terms : {0}'.format(len(terms)))
+    if (useOnlyHashtags) : plt.title('Nombre total des hashtags : {0}'.format(len(terms)))
+    else : plt.title('Nombre total des terms : {0}'.format(len(terms)))
     plt.show()
+    """
 #--------------------------------------------------------------------------------------------
 #         Plot time distribution 
 #--------------------------------------------------------------------------------------------
@@ -151,7 +170,7 @@ def plotTermApparitionInTimeWithOrder(tweets,topTermOrder=0, granularity=3600, d
 #--------------------------------------------------------------------------------------------
 
 def plotTweetsInSpaceDistribution(tweets) :
-    xList,yList=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweets])
+    xList,yList=zip(*[(tweet.position.longitude,tweet.position.latitude) for tweet in tweets])
     plt.figure(1)
     plt.clf()
     plt.plot(yList,xList, 'o', markerfacecolor='k',markeredgecolor='k', markersize=2)
@@ -166,8 +185,8 @@ def plotTermInSpaceDistribution(tweets,term) :
         print "This term dosent exist in no tweets"
         return
     tweetOfTerm=[tweets[k] for k in TweetPerTermMap[term]]
-    xListBack,yListBack=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweets])
-    xList,yList=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweetOfTerm])
+    xListBack,yListBack=zip(*[(tweet.position.longitude,tweet.position.latitude) for tweet in tweets])
+    xList,yList=zip(*[(tweet.position.longitude,tweet.position.latitude) for tweet in tweetOfTerm])
 
     plt.figure(1)
     plt.clf()
@@ -182,8 +201,8 @@ def plotTermInSpaceDistributionWithOrder(tweets,topTermOrder=0) :
     TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False)
     term = sorted(list(TweetPerTermMap),key=lambda element : len(TweetPerTermMap[element]),reverse=True)[topTermOrder]
     tweetOfTerm=[tweets[k] for k in TweetPerTermMap[term]]
-    xListBack,yListBack=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweets])
-    xList,yList=zip(*[(tweet.position.latitude,tweet.position.longitude) for tweet in tweetOfTerm])
+    xListBack,yListBack=zip(*[(tweet.position.longitude,tweet.position.latitude) for tweet in tweets])
+    xList,yList=zip(*[(tweet.position.longitude,tweet.position.latitude) for tweet in tweetOfTerm])
 
     plt.figure(1)
     plt.clf()
