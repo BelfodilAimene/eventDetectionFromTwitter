@@ -18,11 +18,6 @@ def plotTermOccurencesDistribution(tweets) :
     plt.yscale("log")
     plt.title('Nombre total des terms : {0}'.format(len(terms)))
     plt.show()
-      
-    
-
-
-
 #--------------------------------------------------------------------------------------------
 #         Plot time distribution 
 #--------------------------------------------------------------------------------------------

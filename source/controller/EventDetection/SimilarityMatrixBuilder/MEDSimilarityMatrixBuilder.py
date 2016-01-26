@@ -107,7 +107,6 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
                     IDFVector[term] = 1
                     tweetsPerTermMap[term] = set([tweetIndex])
                     timeSerieMap[term]={cell:{timeIndex:occurence}}
-                TFVector[term]/=floatNumberOfTweets
 
             TFIDFVectors.append(TFVector)
             tweetIndex+=1
