@@ -5,16 +5,19 @@ from ....model.Position import Position
 from ..Utils.Constants import *
 
 class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
-    def __init__(self,timeResolution=1800,distanceResolution=100,scaleNumber=4,minSimilarity=0.5) :
+    def __init__(self,timeResolution=1800,distanceResolution=100,scaleNumber=4,minSimilarity=0.5,useOnlyHashtags=False) :
         """
         timeResolution : define the time resolution for time series
         distanceResolution : define a cell size in meter (not exact)
         scaleNumber : nscale in the paper
+        minSimilarity : if similarity between two tweets is below minSimilarity, this will be considered as 0 (no arc between the tweets)
+        useOnlyHashtags : if True onlyhashtags will be used, if false all terms will be used
         """
         self.timeResolution=timeResolution
         self.distanceResolution=distanceResolution
         self.scaleNumber=scaleNumber
         self.minSimilarity=max(min(minSimilarity,1),0)
+        self.useOnlyHashtags=useOnlyHashtags
         
     def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
         """
@@ -24,6 +27,7 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         distanceResolution=self.distanceResolution
         scaleNumber=self.scaleNumber
         minSimilarity=self.minSimilarity
+        useOnlyHashtags=self.useOnlyHashtags
         
         numberOfTweets=len(tweets)
         floatNumberOfTweets=float(numberOfTweets)
@@ -67,22 +71,29 @@ class MEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
             cell=(int((tweet.position.latitude-minLat)/deltaDlat),int((tweet.position.longitude-minLon)/deltaDlon))
             cellOfTweet.append(cell)
             timeIndex=int((tweet.time-minTime).total_seconds()/timeResolution)
-            
-            #Prepare the text
-            text = text.lower()
-            text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
-            text = re.sub('@[^\s]+','',text)
-            text = re.sub('[\s]+', ' ', text)
-            text = text.strip('\'"')
-            regex="|".join(DELIMITERS)
-            terms=re.split(regex,text)
 
-            #Construct the Occurence vector
-            for term in terms :
-                if (TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE) :
+            if useOnlyHashtags :
+                terms=tweet.hashtags
+                for term in terms :
                     try: TFVector[term] += 1
                     except KeyError: TFVector[term] = 1
+            else :
+                #Prepare the text
+                text = text.lower()
+                text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
+                text = re.sub('@[^\s]+','',text)
+                text = re.sub('[\s]+', ' ', text)
+                text = text.strip('\'"')
+                regex="|".join(DELIMITERS)
+                terms=re.split(regex,text)
 
+                #Construct the Occurence vector
+                for term in terms :
+                    if (TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE) :
+                        try: TFVector[term] += 1
+                        except KeyError: TFVector[term] = 1
+
+            
             #Finalize the TF vector while constructing the IDF vector, tweetsPerTermMap and the timeSerieMap
             for term,occurence in TFVector.iteritems() :
                 if term in IDFVector :

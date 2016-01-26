@@ -6,13 +6,15 @@ from ..Utils.TFIDFUtilities import getTweetsTFIDFVectorAndNorm
 from ..Utils.Constants import DEG_LATITUDE_IN_METER
 
 class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
-    def __init__(self,timeThreshold,distanceThreshold) :
+    def __init__(self,timeThreshold,distanceThreshold,useOnlyHashtags=False) :
         """
         timeThreshold : time threshold in seconds
         distanceThreshold : distance threshold in meter
+        useOnlyHashtags : if True only hashtags will be used, if false all terms will be used
         """
         self.timeThreshold=timeThreshold
         self.distanceThreshold=distanceThreshold
+        self.useOnlyHashtags=useOnlyHashtags
         
     def build(self,tweets,minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
         """
@@ -20,11 +22,12 @@ class LEDSimilarityMatrixBuilder(SimilarityMatrixBuilder) :
         """
         timeThreshold=float(self.timeThreshold)
         distanceThreshold=float(self.distanceThreshold)
+        useOnlyHashtags=self.useOnlyHashtags
         numberOfTweets=len(tweets)
 
         M=dok_matrix((numberOfTweets, numberOfTweets),dtype=np.float)
         print "      Calculating TF-IDF vectors ..."
-        TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=minimalTermPerTweet, remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
+        TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=minimalTermPerTweet, remove_noise_with_poisson_Law=remove_noise_with_poisson_Law,useOnlyHashtags=useOnlyHashtags)
         print "      Constructing similarity matrix ..."
 
         distanceThresholdInDegree=distanceThreshold/DEG_LATITUDE_IN_METER

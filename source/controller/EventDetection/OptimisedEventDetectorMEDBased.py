@@ -8,11 +8,13 @@ class OptimisedEventDetectorMEDBased :
     #-------------------------------------------------------------------------------------------------------------------------------------
     #   Class constructor
     #-------------------------------------------------------------------------------------------------------------------------------------
-    def __init__(self,tweets,timeResolution=1800,distanceResolution=100,scaleNumber=4,minSimilarity=0.5) :
+    def __init__(self,tweets,timeResolution=1800,distanceResolution=100,scaleNumber=4,minSimilarity=0.5,useOnlyHashtags=False) :
         """
         timeResolution : define the time resolution for time series
         distanceResolution : define a cell size in meter (not exact)
         scaleNumber : nscale in the paper
+        minSimilarity : if similarity between two tweets is below minSimilarity, this will be considered as 0 (no arc between the tweets)
+        useOnlyHashtags : if True onlyhashtags will be used, if false all terms will be used
         """
         
         self.tweets=np.array(tweets)
@@ -20,6 +22,7 @@ class OptimisedEventDetectorMEDBased :
         self.distanceResolution=distanceResolution
         self.scaleNumber=scaleNumber
         self.minSimilarity=max(min(minSimilarity,1),0)
+        self.useOnlyHashtags=useOnlyHashtags
         self.events=[]
 
     #-------------------------------------------------------------------------------------------------------------------------------------
@@ -138,6 +141,7 @@ class OptimisedEventDetectorMEDBased :
         scaleNumber=self.scaleNumber
         tweets=self.tweets
         minSimilarity=self.minSimilarity
+        useOnlyHashtags=self.useOnlyHashtags
         
         numberOfTweets=len(tweets)
         floatNumberOfTweets=float(numberOfTweets)
@@ -180,21 +184,28 @@ class OptimisedEventDetectorMEDBased :
             cell=(int((tweet.position.latitude-minLat)/deltaDlat),int((tweet.position.longitude-minLon)/deltaDlon))
             cellOfTweet.append(cell)
             timeIndex=int((tweet.time-minTime).total_seconds()/timeResolution)
-            
-            #Prepare the text
-            text = text.lower()
-            text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
-            text = re.sub('@[^\s]+','',text)
-            text = re.sub('[\s]+', ' ', text)
-            text = text.strip('\'"')
-            regex="|".join(DELIMITERS)
-            terms=re.split(regex,text)
 
-            #Construct the Occurence vector
-            for term in terms :
-                if (TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE) :
+            if useOnlyHashtags :
+                terms=tweet.hashtags
+                for term in terms :
                     try: TFVector[term] += 1
                     except KeyError: TFVector[term] = 1
+
+            else :
+                #Prepare the text
+                text = text.lower()
+                text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
+                text = re.sub('@[^\s]+','',text)
+                text = re.sub('[\s]+', ' ', text)
+                text = text.strip('\'"')
+                regex="|".join(DELIMITERS)
+                terms=re.split(regex,text)
+
+                #Construct the Occurence vector
+                for term in terms :
+                    if (TERM_MINIMAL_SIZE<len(term)<TERM_MAXIMAL_SIZE) :
+                        try: TFVector[term] += 1
+                        except KeyError: TFVector[term] = 1
 
             #Finalize the TF vector while constructing the IDF vector, tweetsPerTermMap and the timeSerieMap
             for term,occurence in TFVector.iteritems() :
@@ -218,7 +229,7 @@ class OptimisedEventDetectorMEDBased :
         #haarSerieMap = {term : {cell : [haarTransform,[sum for each timescale],[std for each time scale]], ...}, ...}
         print "\t\tPass 1 on terms - Finalize IDFVectors and transform timeSerieMap to FinestHaarTransform of series"
         TERM_INDEX=0
-        SHOW_RATE=100
+        SHOW_RATE=200
         print "\t\t\tNumber of terms :",len(IDFVector)
         for term,numberOfTweetOfThisTerm in IDFVector.iteritems() :
             if (TERM_INDEX%SHOW_RATE==0) : print "\t\t\t",TERM_INDEX
@@ -298,7 +309,7 @@ class OptimisedEventDetectorMEDBased :
             #deleting term from timeSerieMap
             timeSerieMap[term].clear()
             del timeSerieMap[term]
-            
+
         print "\t\tPass 3 - Finalize TF-IDF Vectors" 
         #Pass 3 - Finalize TF-IDF Vectors
         for TFIDFVector in TFIDFVectors :
@@ -319,7 +330,7 @@ class OptimisedEventDetectorMEDBased :
         #Done with preparation : TFIDFVectors, tweetsPerTermMap, haarSerieMap
         #Now is the time to construct the similarity matrix
         print "\t\tConstructing Similarity Matrix ..."
-        SHOW_RATE=10
+        SHOW_RATE=200
 
         similarityFile=open(similarityFilePath, 'w')
         lastvisted=0

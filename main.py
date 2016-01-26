@@ -14,13 +14,13 @@ LED_SIM=0
 MED_SIM=1
 MED_SIM_WITHOUT_REAL_MATRIX=2
 
-MIN_TERM_OCCURENCE=5
+MIN_TERM_OCCURENCE=0
 REMOVE_NOISE_WITH_POISSON_LAW=False
 
 TIME_RESOLUTION=1800
 DISTANCE_RESOLUTION=100
 SCALE_NUMBER=4
-MIN_SIMILARITY=0.5
+MIN_SIMILARITY=0
 
 NUMBER_OF_TWEETS=56021
 
@@ -35,20 +35,20 @@ def getTweetsFromJSONRepositoryAndSave(repositoryPath="E:\\tweets") :
     mongoDBHandler=MongoDBHandler()
     mongoDBHandler.saveTweetsFromJSONRepository(repositoryPath)
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True) :
+def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True,useOnlyHashtags=False) :
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
 
     if similarityType==LED_SIM :
-        s=LEDSimilarityMatrixBuilder(timeThreshold=TIME_RESOLUTION,distanceThreshold=DISTANCE_RESOLUTION)
+        s=LEDSimilarityMatrixBuilder(timeThreshold=TIME_RESOLUTION,distanceThreshold=DISTANCE_RESOLUTION,useOnlyHashtags=useOnlyHashtags)
         eventDetector=EventDetector(tweets,s)
         events=eventDetector.getEvents(minimalTermPerTweet=minimalTermPerTweet,remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
     elif similarityType==MED_SIM :
-        s=MEDSimilarityMatrixBuilder(timeResolution=TIME_RESOLUTION,distanceResolution=DISTANCE_RESOLUTION,scaleNumber=SCALE_NUMBER,minSimilarity=MIN_SIMILARITY)
+        s=MEDSimilarityMatrixBuilder(timeResolution=TIME_RESOLUTION,distanceResolution=DISTANCE_RESOLUTION,scaleNumber=SCALE_NUMBER,minSimilarity=MIN_SIMILARITY,useOnlyHashtags=useOnlyHashtags)
         eventDetector=EventDetector(tweets,s)
         events=eventDetector.getEvents(minimalTermPerTweet=minimalTermPerTweet,remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
     else :
-        eventDetector=OptimisedEventDetectorMEDBased(tweets,timeResolution=TIME_RESOLUTION,distanceResolution=DISTANCE_RESOLUTION,scaleNumber=SCALE_NUMBER,minSimilarity=MIN_SIMILARITY)
+        eventDetector=OptimisedEventDetectorMEDBased(tweets,timeResolution=TIME_RESOLUTION,distanceResolution=DISTANCE_RESOLUTION,scaleNumber=SCALE_NUMBER,minSimilarity=MIN_SIMILARITY,useOnlyHashtags=useOnlyHashtags)
         events=eventDetector.getEvents(minimalTermPerTweet=minimalTermPerTweet,remove_noise_with_poisson_Law=remove_noise_with_poisson_Law)
         
     print ""
@@ -90,10 +90,16 @@ def showTermSpaceDistributionByTerm(limit=300,term="#shopping") :
     mongoDBHandler=MongoDBHandler()
     tweets=mongoDBHandler.getAllTweets(limit=limit)
     plotTermInSpaceDistribution(tweets,term)
+
+def showTermOccurenceDistribution(limit=300) :
+    mongoDBHandler=MongoDBHandler()
+    tweets=mongoDBHandler.getAllTweets(limit=limit)
+    plotTermOccurencesDistribution(tweets)
+    
 #---------------------------------------------------------------------------------------------------------------------------------------------  
-def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
+def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX,useOnlyHashtags=False) :
     staringTime=time.time()
-    detectEvents(limit=limit,similarityType=similarityType)
+    detectEvents(limit=limit,similarityType=similarityType,useOnlyHashtags=useOnlyHashtags)
     elapsed_time=(time.time()-staringTime)
     print "-"*40
     print "Elapsed time : {0}s".format(elapsed_time)
@@ -101,11 +107,11 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX) :
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
 #showTweetsNumberSignal(limit=NUMBER_OF_TWEETS,granularity=3600, dyadic=True)
-#showTermOccurenceSignalByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=300, granularity=3600, dyadic=True)
+#showTermOccurenceSignalByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=1, granularity=3600, dyadic=True)
 #showTermOccurenceSignalByTerm(limit=NUMBER_OF_TWEETS,term="bisous", granularity=3600, dyadic=True)
 #showTweetsSpaceDistribution(limit=NUMBER_OF_TWEETS)
 #showTermSpaceDistributionByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=0)
-
+#showTermOccurenceDistribution(limit=NUMBER_OF_TWEETS)
 #---------------------------------------------------------------------------------------------------------------------------------------------
 
-main(limit=NUMBER_OF_TWEETS, similarityType=MED_SIM_WITHOUT_REAL_MATRIX)
+main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX,useOnlyHashtags=True)

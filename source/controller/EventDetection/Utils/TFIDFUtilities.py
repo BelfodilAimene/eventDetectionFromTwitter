@@ -2,7 +2,10 @@ import re, math, numpy as np
 from ....model.Position import DEG_LATITUDE_IN_METER
 from Constants import *
 
-def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with_poisson_Law=False) :
+def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with_poisson_Law=False,useOnlyHashtags=False) :
+    """
+    useOnlyHashtags : if True only hashtags will be used, if false all terms will be used
+    """
     numberOfTweets=len(tweets)
     TFVectors=[]
     IDFVector={}
@@ -13,32 +16,35 @@ def getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=5, remove_noise_with
     i=0
     #TFVecrors construction
     for tweet in tweets :
-        #---------------------------------------------------------------------------
-        #      Text processing
-        #---------------------------------------------------------------------------
-        text=tweet.text
-        #Convert to lower case
-        text = text.lower()
-        #Convert www.* or https?://* to ""
-        text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
-        #Convert @username to ""
-        text = re.sub('@[^\s]+','',text)
-        #Remove additional white spaces
-        text = re.sub('[\s]+', ' ', text)
-        #trim
-        text = text.strip('\'"')
-        #split
-        regex="|".join(DELIMITERS)
-        terms=re.split(regex,text)
-
         TFVector={}
-        numberOfTerms=len(terms)
-        baseFrequency=1./numberOfTerms if (numberOfTerms>0) else 0
-        for term in terms :
-            if (len(term)<=TERM_MINIMAL_SIZE or len(term)>=TERM_MAXIMAL_SIZE) : continue
-            try: TFVector[term] += baseFrequency
-            except KeyError: TFVector[term] = baseFrequency
-            
+        if (useOnlyHashtags) :
+            terms=tweet.hashtags
+            for term in terms :
+                try: TFVector[term] += 1
+                except KeyError: TFVector[term] = 1
+        else :
+            #---------------------------------------------------------------------------
+            #      Text processing
+            #---------------------------------------------------------------------------
+            text=tweet.text
+            #Convert to lower case
+            text = text.lower()
+            #Convert www.* or https?://* to ""
+            text = re.sub('((www\.[^\s]+)|(https?://[^\s]+))','',text)
+            #Convert @username to ""
+            text = re.sub('@[^\s]+','',text)
+            #Remove additional white spaces
+            text = re.sub('[\s]+', ' ', text)
+            #trim
+            text = text.strip('\'"')
+            #split
+            regex="|".join(DELIMITERS)
+            terms=re.split(regex,text)
+            for term in terms :
+                if (len(term)<=TERM_MINIMAL_SIZE or len(term)>=TERM_MAXIMAL_SIZE) : continue
+                try: TFVector[term] += 1
+                except KeyError: TFVector[term] = 1
+
         TFVectors.append(TFVector)
         for term in TFVector :
             if term in IDFVector :

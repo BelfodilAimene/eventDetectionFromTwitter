@@ -2,6 +2,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
 from TFIDFUtilities import *
+#--------------------------------------------------------------------------------------------
+#        Plot term occurences distribution
+#--------------------------------------------------------------------------------------------
+def plotTermOccurencesDistribution(tweets) :
+    TFIDFVectors,TweetPerTermMap=getTweetsTFIDFVectorAndNorm(tweets, minimalTermPerTweet=0, remove_noise_with_poisson_Law=False)
+    termsAndTermsOccurences=sorted([(term,len(tweetList)) for term,tweetList in TweetPerTermMap.iteritems()],key = lambda couple : couple[1],reverse=True) 
+    terms,termsOccurences=zip(*termsAndTermsOccurences)
+
+    plt.figure(1)
+    plt.clf()
+    plt.plot(range(len(terms)),termsOccurences, 'b-')
+    plt.xlabel("termes")
+    plt.ylabel("Nombre de tweets")
+    plt.yscale("log")
+    plt.title('Nombre total des terms : {0}'.format(len(terms)))
+    plt.show()
+      
+    
+
+
 
 #--------------------------------------------------------------------------------------------
 #         Plot time distribution 
