@@ -12,7 +12,7 @@ class MongoDBHandler :
         self.collection=self.db[collection_name]
 
     def saveTweet(self,tweet) :
-        self.collection.insert(MongoDBHandler.getDocumentFromTweet(tweet))
+        self.collection.insert_one(MongoDBHandler.getDocumentFromTweet(tweet))
         
     def saveTweets(self,tweets) :
         self.collection.insert([MongoDBHandler.getDocumentFromTweet(tweet) for tweet in tweets])
