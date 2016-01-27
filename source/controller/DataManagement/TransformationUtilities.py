@@ -60,8 +60,8 @@ def getTweetFromCSVLine(csvLine) :
     
     position=None
     if line[6]!=NULL_STRING :
-        latitude=float(line[6])
-        longitude=float(line[7])
+        longitude=float(line[6])
+        latitude=float(line[7])
         position=Position(latitude,longitude)
 
     hashtags=getHashtags(text)

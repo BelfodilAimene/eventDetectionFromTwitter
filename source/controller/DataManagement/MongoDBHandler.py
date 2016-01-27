@@ -39,7 +39,7 @@ class MongoDBHandler :
         i=0
         SHOW_RATE=1000
         with open(csvFilePath) as f :
-            f.readline() #Header
+            line=f.readline() #Header
             print "Filling data base"
             for line in f :
                 tweet=getTweetFromCSVLine(line)

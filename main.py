@@ -1,4 +1,4 @@
-import time
+import time,datetime
 from source.controller.DataManagement.MyTwitterAPI import MyTwitterAPI
 from source.controller.DataManagement.MongoDBHandler import MongoDBHandler
 from source.controller.DataManagement.TransformationUtilities import *
@@ -23,9 +23,20 @@ DISTANCE_RESOLUTION=100
 SCALE_NUMBER=4
 MIN_SIMILARITY=0
 
+MINLAT=38
+MAXLAT=46
+MINLON=-80
+MAXLON=-71
+
+MINTIME=datetime.datetime(2015,8,31)
+MAXTIME=datetime.datetime(2015,10,1)
+
 NUMBER_OF_TWEETS=56021
 NUMBER_OF_TWEETS_MEHDI=798400
 
+#---------------------------------------------------------------------------------------------------------------------------------------------
+def filterTweets(tweets,minLat=MINLAT,maxLat=MAXLAT,minLon=MINLON,maxLon=MAXLON,minTime=MINTIME,maxTime=MAXTIME) :
+    return [tweet for tweet in tweets if (minTime<tweet.time<maxTime) and (minLat<=tweet.position.latitude<=maxLat) and (minLon<=tweet.position.longitude<=maxLon)]
 #---------------------------------------------------------------------------------------------------------------------------------------------
 def getTweetsFromTwitterAndSave(count=100,export=False,mongoDBName='Twitter',mongoCollectionName="tweets") :
     mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
@@ -121,5 +132,5 @@ def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX,useOnlyHashtags=F
 #showTermSpaceDistributionByOrder(limit=NUMBER_OF_TWEETS,topTermOrder=0)
 #showTermOccurenceDistribution(limit=NUMBER_OF_TWEETS_MEHDI,useOnlyHashtags=True,mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
 #---------------------------------------------------------------------------------------------------------------------------------------------
-#main(limit=300, similarityType=LED_SIM,useOnlyHashtags=True,mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
+main(limit=300, similarityType=LED_SIM,useOnlyHashtags=True,mongoDBName='Twitter',mongoCollectionName="tweetsMehdi")
 #---------------------------------------------------------------------------------------------------------------------------------------------
