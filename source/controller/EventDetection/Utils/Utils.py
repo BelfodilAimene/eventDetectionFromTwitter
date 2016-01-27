@@ -26,7 +26,7 @@ def plotTermOccurencesDistribution(tweets,useOnlyHashtags=False) :
     print "Number of hashtags occuring in more than    100 tweets :",numberOfHashMore100
     print "Number of hashtags occuring in more than     10 tweets :",numberOfHashMore10
         
-    """
+    
     plt.figure(1)
     plt.clf()
     plt.plot(range(len(terms)),termsOccurences, 'b-')
@@ -36,7 +36,7 @@ def plotTermOccurencesDistribution(tweets,useOnlyHashtags=False) :
     if (useOnlyHashtags) : plt.title('Nombre total des hashtags : {0}'.format(len(terms)))
     else : plt.title('Nombre total des terms : {0}'.format(len(terms)))
     plt.show()
-    """
+    
 #--------------------------------------------------------------------------------------------
 #         Plot time distribution 
 #--------------------------------------------------------------------------------------------
