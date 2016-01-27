@@ -52,7 +52,8 @@ def getTweetsFromCSVFileAndSave(csvFilePath="D:\\PRJS\\Data\\final.csv",mongoDBN
     mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     mongoDBHandler.saveTweetsFromCSVFile(csvFilePath)
 #---------------------------------------------------------------------------------------------------------------------------------------------
-def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True,useOnlyHashtags=False,mongoDBName='Twitter',mongoCollectionName="tweets") :
+def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_OCCURENCE,remove_noise_with_poisson_Law=REMOVE_NOISE_WITH_POISSON_LAW,printEvents=True,printInFile="events.txt",useOnlyHashtags=False,mongoDBName='Twitter',mongoCollectionName="tweets") :
+    staringTime=time.time()
     mongoDBHandler=MongoDBHandler(database_name=mongoDBName,collection_name=mongoCollectionName)
     tweets=mongoDBHandler.getAllTweets(limit=limit)
 
@@ -76,6 +77,21 @@ def detectEvents(limit=300,similarityType=MED_SIM,minimalTermPerTweet=MIN_TERM_O
     if printEvents :
         eventDetector.showTopEvents(top=len(events))
 
+    if printInFile :
+        txtFile=open(printInFile, 'w')
+        elapsed_time=(time.time()-staringTime)
+        txtFile.write("Total elapsed time : {0}s\n".format(elapsed_time))
+        txtFile.write("-"*40+"\n")
+        SEPARATOR="\t|"
+        HEADER="|"+SEPARATOR.join(["Median time","estimated duration (s)","mean latitude","mean longitude","radius (m)","user number","tweets number","top hashtags"])+SEPARATOR+"\n"
+        txtFile.write(HEADER)
+        txtFile.write("-"*40+"\n")
+        for event in events :
+            line=eventDetector.getStringOfEvent(event)
+            txtFile.write(line+"\n")
+            txtFile.write("-"*40+"\n")
+        txtFile.close();
+        
     return events
 #---------------------------------------------------------------------------------------------------------------------------------------------
 def showTweetsNumberSignal(limit=300,granularity=3600, dyadic=True,mongoDBName='Twitter',mongoCollectionName="tweets") :
@@ -115,7 +131,7 @@ def showTermOccurenceDistribution(limit=300,mongoDBName='Twitter',mongoCollectio
 #---------------------------------------------------------------------------------------------------------------------------------------------  
 def main(limit=300, similarityType=MED_SIM_WITHOUT_REAL_MATRIX,useOnlyHashtags=False,mongoDBName='Twitter',mongoCollectionName="tweets") :
     staringTime=time.time()
-    detectEvents(limit=limit,similarityType=similarityType,useOnlyHashtags=useOnlyHashtags,mongoDBName=mongoDBName,mongoCollectionName=mongoCollectionName)
+    detectEvents(limit=limit,similarityType=similarityType,useOnlyHashtags=useOnlyHashtags,mongoDBName=mongoDBName,mongoCollectionName=mongoCollectionName,printEvents=False,printInFile="events.txt")
     elapsed_time=(time.time()-staringTime)
     print "-"*40
     print "Elapsed time : {0}s".format(elapsed_time)
